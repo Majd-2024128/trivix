@@ -13,9 +13,7 @@ export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSett
 
   return (
     <div className="fixed bottom-3 left-3 z-50">
-      <div className="px-3 py-2 rounded-[20px] flex items-center"
-
-      className="rounded-[20px] border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-2xl shadow-2xl shadow-black/25">
+      <div className="flex items-center rounded-[20px] border border-white/15 bg-white/10 px-3 py-2 shadow-2xl shadow-black/25 backdrop-blur-2xl">
         
         <div className="relative flex flex-col items-center">
           <AnimatePresence>
