@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { Sun, Volume2, Image, Upload } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 const WALLPAPERS = [
   { id: "green", label: "Forest Green", style: "linear-gradient(145deg, #1a472a 0%, #2d6a4f 25%, #40916c 50%, #52b788 75%, #74c69d 100%)" },
@@ -20,6 +19,8 @@ export default function SettingsApp({ onWallpaperChange, currentWallpaper, brigh
     if (!file) return;
     setUploading(true);
     try {
+      // Lazy-load supabase only when needed for upload
+      const { supabase } = await import("@/integrations/supabase/client");
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const { error } = await supabase.storage.from('wallpapers').upload(fileName, file);
