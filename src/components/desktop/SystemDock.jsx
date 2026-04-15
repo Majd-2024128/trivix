@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import systemIcon from "@/assets/system-icon.png";
 
 export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSettings }) {
   const [hovered, setIsHovered] = useState(false);
@@ -14,13 +15,7 @@ export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSett
     <div className="fixed bottom-3 left-3 z-50">
       <div className="px-3 py-2 rounded-[20px] flex items-center"
 
-      style={{
-        background: "rgba(255,255,255,0.12)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
-        border: "1px solid rgba(255,255,255,0.15)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1)"
-      }}>
+      className="rounded-[20px] border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-2xl shadow-2xl shadow-black/25">
         
         <div className="relative flex flex-col items-center">
           <AnimatePresence>
@@ -76,13 +71,10 @@ export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSett
             onContextMenu={handleContextMenu}
             whileHover={{ scale: 1.25, y: -10 }}
             whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }} className="rounded-xl w-12 h-12 flex items-center justify-center overflow-hidden shadow-lg"
-
-            style={{ background: "rgba(255,255,255,0.15)" }}>
+            transition={{ type: "spring", stiffness: 400, damping: 17 }} className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-card shadow-lg ring-1 ring-white/10">
             
-            <img src="https://media.db.com/images/public/69da4028252efa86ced524b1/3568a96a4_image-removebg-preview.png"
-
-            alt="Settings" className="w-9 h-9 object-contain" />
+            <img src={systemIcon}
+            alt="Settings" className="h-full w-full object-cover" />
 
             
           </motion.button>
