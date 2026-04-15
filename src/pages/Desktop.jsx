@@ -10,6 +10,13 @@ import SystemBar from "../components/desktop/SystemBar";
 import SystemDock from "../components/desktop/SystemDock";
 import SettingsApp from "../components/desktop/SettingsApp";
 
+const APP_COMPONENTS = {
+  calculator: CalculatorApp,
+  clock: ClockApp,
+  weather: WeatherApp,
+  notes: NotesApp,
+};
+
 const SETTINGS_APP = {
   id: "settings",
   name: "Settings",
@@ -86,29 +93,33 @@ export default function Desktop() {
 
       {/* Windows */}
       {windows.map((w) => (
-        <DesktopWindow
-          key={w.app.id}
-          app={w.app}
-          zIndex={w.zIndex}
-          initialPos={w.initialPos}
-          onClose={() => closeWindow(w.app.id)}
-          onFocus={(controls) => focusWindow(w.app.id, controls)}
-        >
-          {w.app.isSettings && (
-            <SettingsApp
-              onWallpaperChange={setWallpaper}
-              currentWallpaper={wallpaper}
-              brightness={brightness}
-              onBrightnessChange={setBrightness}
-              volume={volume}
-              onVolumeChange={setVolume}
-            />
-          )}
-          {w.app.id === "calculator" && <CalculatorApp />}
-          {w.app.id === "clock" && <ClockApp />}
-          {w.app.id === "weather" && <WeatherApp />}
-          {w.app.id === "notes" && <NotesApp />}
-        </DesktopWindow>
+        (() => {
+          const AppComponent = APP_COMPONENTS[w.app.id];
+
+          return (
+            <DesktopWindow
+              key={w.app.id}
+              app={w.app}
+              zIndex={w.zIndex}
+              initialPos={w.initialPos}
+              onClose={() => closeWindow(w.app.id)}
+              onFocus={(controls) => focusWindow(w.app.id, controls)}
+            >
+              {w.app.isSettings ? (
+                <SettingsApp
+                  onWallpaperChange={setWallpaper}
+                  currentWallpaper={wallpaper}
+                  brightness={brightness}
+                  onBrightnessChange={setBrightness}
+                  volume={volume}
+                  onVolumeChange={setVolume}
+                />
+              ) : AppComponent ? (
+                <AppComponent />
+              ) : null}
+            </DesktopWindow>
+          );
+        })()
       ))}
 
       <SystemDock onOpenSettings={() => openApp(SETTINGS_APP)} isSettingsOpen={isSettingsOpen} onCloseSettings={() => closeWindow("settings")} />
