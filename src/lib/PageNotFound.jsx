@@ -1,10 +1,8 @@
 import { useLocation } from 'react-router-dom';
-import { useAuth } from '@/lib/AuthContext';
 
 export default function PageNotFound() {
   const location = useLocation();
   const pageName = location.pathname.substring(1);
-  const { user, isAuthenticated } = useAuth();
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
