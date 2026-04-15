@@ -68,10 +68,9 @@ export default function DockIcon({ app, onClick, isOpen, onClose }) {
         onContextMenu={handleContextMenu}
         whileTap={{ scale: 0.95 }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden shadow-lg"
-        style={{ background: app.color, boxShadow: `0 4px 15px ${app.color}66` }}
+        className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-card shadow-lg ring-1 ring-white/10"
       >
-        {app.icon.startsWith("http") ? (
+        {typeof app.icon === "string" ? (
           <img src={app.icon} alt={app.name} className="w-full h-full object-cover" />
         ) : (
           <span className="text-2xl">{app.icon}</span>
