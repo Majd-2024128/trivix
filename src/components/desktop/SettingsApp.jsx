@@ -1,7 +1,6 @@
-const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me: async()=>null }, entities:new Proxy({}, { get:()=>({ filter:async()=>[], get:async()=>null, create:async()=>({}), update:async()=>({}), delete:async()=>({}) }) }), integrations:{ Core:{ UploadFile:async()=>({ file_url:'' }) } } };
-
 import { useState, useRef } from "react";
 import { Sun, Volume2, Image, Upload } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const WALLPAPERS = [
   { id: "green", label: "Forest Green", style: "linear-gradient(145deg, #1a472a 0%, #2d6a4f 25%, #40916c 50%, #52b788 75%, #74c69d 100%)" },
@@ -20,20 +19,26 @@ export default function SettingsApp({ onWallpaperChange, currentWallpaper, brigh
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
-    const { file_url } = await db.integrations.Core.UploadFile({ file });
-    onWallpaperChange(`url(${file_url}) center/cover no-repeat`);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const { error } = await supabase.storage.from('wallpapers').upload(fileName, file);
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from('wallpapers').getPublicUrl(fileName);
+      onWallpaperChange(`url(${publicUrl}) center/cover no-repeat`);
+    } catch (err) {
+      console.error('Upload failed:', err);
+    }
     setUploading(false);
   };
 
   return (
     <div className="flex flex-col h-full bg-black text-white font-space overflow-y-auto">
-      {/* Header */}
       <div className="px-6 pt-5 pb-4 border-b border-white/10">
         <h1 className="text-lg font-semibold">System</h1>
       </div>
 
       <div className="flex-1 px-6 py-5 space-y-8">
-        {/* Wallpaper */}
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Image className="w-4 h-4 text-green-400" />
@@ -61,42 +66,25 @@ export default function SettingsApp({ onWallpaperChange, currentWallpaper, brigh
           </div>
         </section>
 
-        {/* Brightness */}
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Sun className="w-4 h-4 text-yellow-400" />
             <span className="text-sm font-medium text-white/80">Brightness</span>
             <span className="ml-auto text-sm text-white/40">{brightness}%</span>
           </div>
-          <input
-            type="range"
-            min={20}
-            max={100}
-            value={brightness}
-            onChange={(e) => onBrightnessChange(Number(e.target.value))}
-            className="w-full accent-yellow-400 cursor-pointer"
-          />
+          <input type="range" min={20} max={100} value={brightness} onChange={(e) => onBrightnessChange(Number(e.target.value))} className="w-full accent-yellow-400 cursor-pointer" />
         </section>
 
-        {/* Volume */}
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Volume2 className="w-4 h-4 text-blue-400" />
             <span className="text-sm font-medium text-white/80">Volume</span>
             <span className="ml-auto text-sm text-white/40">{volume}%</span>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={volume}
-            onChange={(e) => onVolumeChange(Number(e.target.value))}
-            className="w-full accent-blue-400 cursor-pointer"
-          />
+          <input type="range" min={0} max={100} value={volume} onChange={(e) => onVolumeChange(Number(e.target.value))} className="w-full accent-blue-400 cursor-pointer" />
         </section>
       </div>
 
-      {/* Footer */}
       <div className="px-6 py-4 border-t border-white/10 text-center">
         <p className="text-white/25 text-xs font-space">Copyright © 2026 Tejt</p>
       </div>
