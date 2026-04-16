@@ -6,6 +6,7 @@ import calculatorIcon from "@/assets/calculator-icon.png";
 import notesIcon from "@/assets/notes-icon.png";
 import clockIcon from "@/assets/clock-icon.png";
 import calendarIcon from "@/assets/calendar-icon.png";
+import questIcon from "@/assets/quest-icon.png";
 
 const INITIAL_APPS = [
   { id: "weather", name: "Weather", icon: weatherIcon },
@@ -13,6 +14,7 @@ const INITIAL_APPS = [
   { id: "calendar", name: "Calendar", icon: calendarIcon },
   { id: "notes", name: "Notes", icon: notesIcon },
   { id: "clock", name: "Clock", icon: clockIcon },
+  { id: "quest", name: "Quest", icon: questIcon },
 ];
 
 export { INITIAL_APPS as APPS };

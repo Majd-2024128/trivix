@@ -5,6 +5,7 @@ import ClockApp from "../components/apps/ClockApp";
 import WeatherApp from "../components/apps/WeatherApp";
 import NotesApp from "../components/apps/NotesApp";
 import CalendarApp from "../components/apps/CalendarApp";
+import QuestApp from "../components/apps/QuestApp";
 import Dock from "../components/desktop/Dock";
 import DesktopWindow from "../components/desktop/DesktopWindow";
 import SystemBar from "../components/desktop/SystemBar";
@@ -17,6 +18,7 @@ const APP_COMPONENTS = {
   weather: WeatherApp,
   notes: NotesApp,
   calendar: CalendarApp,
+  quest: QuestApp,
 };
 
 const SETTINGS_APP = {
@@ -34,8 +36,21 @@ export default function Desktop() {
   const [wallpaper, setWallpaper] = useState(DEFAULT_WALLPAPER);
   const [brightness, setBrightness] = useState(100);
   const [volume, setVolume] = useState(50);
+  const [minimizedApps, setMinimizedApps] = useState(new Set());
 
   const openApp = useCallback((app) => {
+    // If minimized, restore it
+    if (minimizedApps.has(app.id)) {
+      setMinimizedApps((prev) => {
+        const next = new Set(prev);
+        next.delete(app.id);
+        return next;
+      });
+      setWindows((prev) => prev.map((w) => w.app.id === app.id ? { ...w, zIndex: nextZ } : w));
+      setNextZ((z) => z + 1);
+      return;
+    }
+
     const existing = windows.find((w) => w.app.id === app.id);
     if (existing) {
       setWindows((prev) => prev.map((w) => w.app.id === app.id ? { ...w, zIndex: nextZ } : w));
@@ -52,11 +67,20 @@ export default function Desktop() {
       minimize: () => {},
       maximize: () => {},
     });
-  }, [windows, nextZ]);
+  }, [windows, nextZ, minimizedApps]);
 
   const closeWindow = useCallback((appId) => {
     setWindows((prev) => prev.filter((w) => w.app.id !== appId));
+    setMinimizedApps((prev) => {
+      const next = new Set(prev);
+      next.delete(appId);
+      return next;
+    });
     setFocusedControls(null);
+  }, []);
+
+  const minimizeWindow = useCallback((appId) => {
+    setMinimizedApps((prev) => new Set(prev).add(appId));
   }, []);
 
   const focusWindow = useCallback((appId, controls) => {
@@ -65,7 +89,6 @@ export default function Desktop() {
     if (controls) setFocusedControls(controls);
   }, [nextZ]);
 
-  // Alt+C / Option+C to close focused window
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.altKey && (e.key === "c" || e.key === "C")) {
@@ -114,6 +137,8 @@ export default function Desktop() {
             app={w.app}
             zIndex={w.zIndex}
             initialPos={w.initialPos}
+            isMinimized={minimizedApps.has(w.app.id)}
+            onMinimize={() => minimizeWindow(w.app.id)}
             onClose={() => closeWindow(w.app.id)}
             onFocus={(controls) => focusWindow(w.app.id, controls)}
           >
