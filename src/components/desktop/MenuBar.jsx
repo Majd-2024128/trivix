@@ -21,6 +21,9 @@ export default function MenuBar({ controls }) {
     hour12: true
   });
 
+  // Show "System" instead of "Settings" in the menu bar
+  const displayName = controls?.appName === "Settings" ? "System" : controls?.appName;
+
   return (
     <div
       className="fixed top-0 left-0 right-0 h-7 flex items-center justify-between px-4 z-50 select-none"
@@ -28,8 +31,8 @@ export default function MenuBar({ controls }) {
         background: "rgba(30, 40, 30, 0.65)",
         backdropFilter: "blur(30px)",
         WebkitBackdropFilter: "blur(30px)"
-      }}>
-      
+      }}
+    >
       <div className="flex items-center gap-3">
         {controls ? (
           <>
@@ -42,8 +45,8 @@ export default function MenuBar({ controls }) {
             <button onClick={controls.maximize} className="flex items-center justify-center hover:opacity-70 transition-opacity">
               <Maximize2 className="w-3 h-3 text-green-400" strokeWidth={2.5} />
             </button>
-            {controls.appName && (
-              <span className="text-white/60 text-xs font-space font-medium ml-1">{controls.appName}</span>
+            {displayName && (
+              <span className="text-white/60 text-xs font-space font-medium ml-1">{displayName}</span>
             )}
           </>
         ) : (
@@ -60,7 +63,10 @@ export default function MenuBar({ controls }) {
           </>
         )}
       </div>
-      <div className="flex items-center gap-4" />
-    </div>);
-
+      <div className="flex items-center gap-2 text-white/60 text-xs font-space">
+        <span>{formattedDate}</span>
+        <span>{formattedTime}</span>
+      </div>
+    </div>
+  );
 }

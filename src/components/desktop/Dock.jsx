@@ -5,10 +5,12 @@ import weatherIcon from "@/assets/weather-icon.png";
 import calculatorIcon from "@/assets/calculator-icon.png";
 import notesIcon from "@/assets/notes-icon.png";
 import clockIcon from "@/assets/clock-icon.png";
+import calendarIcon from "@/assets/calendar-icon.png";
 
 const INITIAL_APPS = [
   { id: "weather", name: "Weather", icon: weatherIcon },
   { id: "calculator", name: "Calculator", icon: calculatorIcon },
+  { id: "calendar", name: "Calendar", icon: calendarIcon },
   { id: "notes", name: "Notes", icon: notesIcon },
   { id: "clock", name: "Clock", icon: clockIcon },
 ];
@@ -34,7 +36,7 @@ export default function Dock({ onOpenApp, openApps, onCloseApp }) {
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
-                className="flex flex-row items-end gap-2 rounded-[20px] border border-white/15 bg-white/10 px-4 py-2 shadow-2xl shadow-black/25 backdrop-blur-2xl"
+              className="flex flex-row items-end gap-2 rounded-[20px] border border-white/15 bg-white/[0.18] px-4 py-2 shadow-2xl shadow-black/25 backdrop-blur-2xl"
             >
               {apps.map((app, index) => (
                 <Draggable key={app.id} draggableId={app.id} index={index}>
@@ -57,5 +59,4 @@ export default function Dock({ onOpenApp, openApps, onCloseApp }) {
       </DragDropContext>
     </div>
   );
-
 }

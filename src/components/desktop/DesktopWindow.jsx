@@ -28,17 +28,14 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
     setIsMinimized((v) => !v);
   }, []);
 
-  // Keep controls ref up to date
   controlsRef.current = { close: onClose, minimize: toggleMinimize, maximize: toggleMaximize, appName: app.name };
 
   const notifyFocus = useCallback(() => {
     onFocus(controlsRef.current);
   }, [onFocus]);
 
-  // Auto-focus on mount so controls appear immediately
   useEffect(() => {
     notifyFocus();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleMouseDownDrag = useCallback((e) => {
@@ -51,16 +48,13 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
 
   useEffect(() => {
     if (!isDragging) return;
-
     const handleMouseMove = (e) => {
       setPos({
         x: Math.max(0, e.clientX - dragOffset.current.x),
         y: Math.max(0, e.clientY - dragOffset.current.y),
       });
     };
-
     const handleMouseUp = () => setIsDragging(false);
-
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
     return () => {
@@ -84,15 +78,23 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
       }}
       onMouseDown={notifyFocus}
     >
-      {/* Drag handle — invisible, positioned at top */}
+      {/* Visible drag bar */}
       <div
-        className="absolute top-0 left-0 right-0 h-6 shrink-0 select-none z-10"
-        style={{ cursor: isMaximized ? "default" : "grab" }}
+        className="h-7 shrink-0 select-none flex items-center justify-center"
+        style={{
+          cursor: isMaximized ? "default" : "grab",
+          background: "rgba(30, 30, 30, 0.85)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
+        }}
         onMouseDown={handleMouseDownDrag}
-      />
+        onDoubleClick={toggleMaximize}
+      >
+        <div className="w-8 h-1 rounded-full bg-white/20" />
+      </div>
 
       {/* Content */}
-      <div className="w-full h-full relative overflow-hidden">
+      <div className="w-full flex-1 relative overflow-hidden">
         <div className="w-full h-full" style={{ pointerEvents: isDragging ? "none" : "auto" }}>
           {children}
         </div>
