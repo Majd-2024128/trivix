@@ -1,10 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
-export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPos, children }) {
+export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPos, isMinimized, onMinimize, children }) {
   const [pos, setPos] = useState(initialPos || { x: 80, y: 40 });
   const [size, setSize] = useState({ w: 700, h: 480 });
   const [isMaximized, setIsMaximized] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const prevState = useRef({ pos: { x: 80, y: 40 }, size: { w: 700, h: 480 } });
@@ -25,8 +24,8 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
   }, [pos, size]);
 
   const toggleMinimize = useCallback(() => {
-    setIsMinimized((v) => !v);
-  }, []);
+    if (onMinimize) onMinimize();
+  }, [onMinimize]);
 
   controlsRef.current = { close: onClose, minimize: toggleMinimize, maximize: toggleMaximize, appName: app.name };
 
