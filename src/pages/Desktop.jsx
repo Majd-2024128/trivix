@@ -1,9 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import MenuBar from "../components/desktop/MenuBar";
 import CalculatorApp from "../components/apps/CalculatorApp";
 import ClockApp from "../components/apps/ClockApp";
 import WeatherApp from "../components/apps/WeatherApp";
 import NotesApp from "../components/apps/NotesApp";
+import CalendarApp from "../components/apps/CalendarApp";
 import Dock from "../components/desktop/Dock";
 import DesktopWindow from "../components/desktop/DesktopWindow";
 import SystemBar from "../components/desktop/SystemBar";
@@ -15,11 +16,12 @@ const APP_COMPONENTS = {
   clock: ClockApp,
   weather: WeatherApp,
   notes: NotesApp,
+  calendar: CalendarApp,
 };
 
 const SETTINGS_APP = {
   id: "settings",
-  name: "Settings",
+  name: "System",
   isSettings: true,
 };
 
@@ -44,7 +46,6 @@ export default function Desktop() {
     const newZ = nextZ;
     setWindows((prev) => [...prev, { app, zIndex: newZ, initialPos: { x: 100 + offset, y: 50 + offset } }]);
     setNextZ((z) => z + 1);
-    // Auto-focus: set controls immediately when opening
     setFocusedControls({
       appName: app.name,
       close: () => closeWindow(app.id),
@@ -63,6 +64,20 @@ export default function Desktop() {
     setNextZ((z) => z + 1);
     if (controls) setFocusedControls(controls);
   }, [nextZ]);
+
+  // Alt+C / Option+C to close focused window
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.altKey && (e.key === "c" || e.key === "C")) {
+        e.preventDefault();
+        if (focusedControls?.close) {
+          focusedControls.close();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [focusedControls]);
 
   const openAppIds = windows.map((w) => w.app.id);
   const isSettingsOpen = openAppIds.includes("settings");
@@ -91,36 +106,32 @@ export default function Desktop() {
 
       <MenuBar controls={focusedControls} />
 
-      {/* Windows */}
-      {windows.map((w) => (
-        (() => {
-          const AppComponent = APP_COMPONENTS[w.app.id];
-
-          return (
-            <DesktopWindow
-              key={w.app.id}
-              app={w.app}
-              zIndex={w.zIndex}
-              initialPos={w.initialPos}
-              onClose={() => closeWindow(w.app.id)}
-              onFocus={(controls) => focusWindow(w.app.id, controls)}
-            >
-              {w.app.isSettings ? (
-                <SettingsApp
-                  onWallpaperChange={setWallpaper}
-                  currentWallpaper={wallpaper}
-                  brightness={brightness}
-                  onBrightnessChange={setBrightness}
-                  volume={volume}
-                  onVolumeChange={setVolume}
-                />
-              ) : AppComponent ? (
-                <AppComponent />
-              ) : null}
-            </DesktopWindow>
-          );
-        })()
-      ))}
+      {windows.map((w) => {
+        const AppComponent = APP_COMPONENTS[w.app.id];
+        return (
+          <DesktopWindow
+            key={w.app.id}
+            app={w.app}
+            zIndex={w.zIndex}
+            initialPos={w.initialPos}
+            onClose={() => closeWindow(w.app.id)}
+            onFocus={(controls) => focusWindow(w.app.id, controls)}
+          >
+            {w.app.isSettings ? (
+              <SettingsApp
+                onWallpaperChange={setWallpaper}
+                currentWallpaper={wallpaper}
+                brightness={brightness}
+                onBrightnessChange={setBrightness}
+                volume={volume}
+                onVolumeChange={setVolume}
+              />
+            ) : AppComponent ? (
+              <AppComponent />
+            ) : null}
+          </DesktopWindow>
+        );
+      })}
 
       <SystemDock onOpenSettings={() => openApp(SETTINGS_APP)} isSettingsOpen={isSettingsOpen} onCloseSettings={() => closeWindow("settings")} />
       <Dock onOpenApp={openApp} openApps={openAppIds} onCloseApp={closeWindow} />

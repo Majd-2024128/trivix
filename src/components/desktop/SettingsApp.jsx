@@ -14,23 +14,20 @@ export default function SettingsApp({ onWallpaperChange, currentWallpaper, brigh
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  const handleImageUpload = async (e) => {
+  const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
-    try {
-      // Lazy-load supabase only when needed for upload
-      const { supabase } = await import("@/integrations/supabase/client");
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const { error } = await supabase.storage.from('wallpapers').upload(fileName, file);
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from('wallpapers').getPublicUrl(fileName);
-      onWallpaperChange(`url(${publicUrl}) center/cover no-repeat`);
-    } catch (err) {
-      console.error('Upload failed:', err);
-    }
-    setUploading(false);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      onWallpaperChange(`url(${ev.target.result})`);
+      setUploading(false);
+    };
+    reader.onerror = () => {
+      console.error("Failed to read file");
+      setUploading(false);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -56,12 +53,12 @@ export default function SettingsApp({ onWallpaperChange, currentWallpaper, brigh
               />
             ))}
             <button
-              onClick={() => fileInputRef.current.click()}
+              onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               className="h-14 rounded-lg border border-white/20 flex flex-col items-center justify-center gap-1 hover:bg-white/10 transition-colors disabled:opacity-50"
             >
               <Upload className="w-4 h-4 text-white/60" />
-              <span className="text-white/40 text-xs">{uploading ? "Uploading..." : "Custom"}</span>
+              <span className="text-white/40 text-xs">{uploading ? "Loading..." : "Custom"}</span>
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           </div>
