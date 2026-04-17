@@ -1,36 +1,15 @@
-import { useState, useEffect } from "react";
 import { X, ArrowDown, Maximize2 } from "lucide-react";
 
 export default function MenuBar({ controls }) {
-  const [time, setTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formattedDate = time.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric"
-  });
-
-  const formattedTime = time.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true
-  });
-
-  // Show "System" instead of "Settings" in the menu bar
   const displayName = controls?.appName === "Settings" ? "System" : controls?.appName;
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 h-7 flex items-center justify-between px-4 z-50 select-none"
+      className="fixed top-0 left-0 right-0 h-7 flex items-center px-4 z-50 select-none"
       style={{
         background: "rgba(30, 40, 30, 0.65)",
         backdropFilter: "blur(30px)",
-        WebkitBackdropFilter: "blur(30px)"
+        WebkitBackdropFilter: "blur(30px)",
       }}
     >
       <div className="flex items-center gap-3">
@@ -62,10 +41,6 @@ export default function MenuBar({ controls }) {
             </div>
           </>
         )}
-      </div>
-      <div className="flex items-center gap-2 text-white/60 text-xs font-space">
-        <span>{formattedDate}</span>
-        <span>{formattedTime}</span>
       </div>
     </div>
   );

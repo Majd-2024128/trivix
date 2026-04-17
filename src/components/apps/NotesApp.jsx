@@ -137,6 +137,9 @@ export default function NotesApp() {
             Select a note or create a new one
           </div>
         )}
+        <div className="px-4 py-1.5 border-t border-white/10 text-center">
+          <p className="text-white/25 text-[10px] font-space">Copyright © 2026 Tejt</p>
+        </div>
       </div>
     </div>
   );
