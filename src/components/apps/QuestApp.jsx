@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, ArrowLeft, ArrowRight, RotateCw, Home, Globe, Plus, X } from "lucide-react";
 
-const GOOGLE_SEARCH_URL = "https://duckduckgo.com/?q=";
-// Use a lightweight homepage that allows iframing (Google blocks iframes via X-Frame-Options).
-const HOME_URL = "https://duckduckgo.com/?kp=-2&kl=us-en&kak=-1";
+// Google is the default search engine. Use the iframe-friendly /webhp?igu=1 endpoint for the homepage.
+const GOOGLE_SEARCH_URL = "https://www.google.com/search?igu=1&q=";
+const HOME_URL = "https://www.google.com/webhp?igu=1";
 
 const buildUrl = (raw) => {
   const trimmed = raw.trim();
