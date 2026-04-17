@@ -172,6 +172,10 @@ export default function WeatherApp() {
             </div>
           ))}
         </div>
+
+        <div className="pt-4 pb-2 text-center">
+          <p className="text-white/30 text-[10px] font-space">Copyright © 2026 Tejt</p>
+        </div>
       </div>
     </div>
   );

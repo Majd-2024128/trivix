@@ -296,6 +296,9 @@ export default function ClockApp() {
           </button>
         ))}
       </div>
+      <div className="py-1.5 border-t border-white/10 text-center bg-black/40">
+        <p className="text-white/25 text-[10px] font-space">Copyright © 2026 Tejt</p>
+      </div>
     </div>
   );
 }
