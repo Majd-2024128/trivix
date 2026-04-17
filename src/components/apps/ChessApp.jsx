@@ -2,9 +2,20 @@ import { useState, useEffect, useMemo } from "react";
 import { Chess } from "chess.js";
 import { RotateCcw, Cpu } from "lucide-react";
 
-const PIECE_GLYPHS = {
-  wK: "♔", wQ: "♕", wR: "♖", wB: "♗", wN: "♘", wP: "♙",
-  bK: "♚", bQ: "♛", bR: "♜", bB: "♝", bN: "♞", bP: "♟",
+// 3D-rendered chess piece images (public domain Wikimedia "3D" set).
+const PIECE_IMAGES = {
+  wK: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Chess_klt60.png/120px-Chess_klt60.png",
+  wQ: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Chess_qlt60.png/120px-Chess_qlt60.png",
+  wR: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Chess_rlt60.png/120px-Chess_rlt60.png",
+  wB: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Chess_blt60.png/120px-Chess_blt60.png",
+  wN: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Chess_nlt60.png/120px-Chess_nlt60.png",
+  wP: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Chess_plt60.png/120px-Chess_plt60.png",
+  bK: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Chess_kdt60.png/120px-Chess_kdt60.png",
+  bQ: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Chess_qdt60.png/120px-Chess_qdt60.png",
+  bR: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Chess_rdt60.png/120px-Chess_rdt60.png",
+  bB: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Chess_bdt60.png/120px-Chess_bdt60.png",
+  bN: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Chess_ndt60.png/120px-Chess_ndt60.png",
+  bP: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Chess_pdt60.png/120px-Chess_pdt60.png",
 };
 
 const PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
