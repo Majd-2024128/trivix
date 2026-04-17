@@ -2,9 +2,20 @@ import { useState, useEffect, useMemo } from "react";
 import { Chess } from "chess.js";
 import { RotateCcw, Cpu } from "lucide-react";
 
-const PIECE_GLYPHS = {
-  wK: "♔", wQ: "♕", wR: "♖", wB: "♗", wN: "♘", wP: "♙",
-  bK: "♚", bQ: "♛", bR: "♜", bB: "♝", bN: "♞", bP: "♟",
+// 3D-rendered chess piece images (public domain Wikimedia "3D" set).
+const PIECE_IMAGES = {
+  wK: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Chess_klt60.png/120px-Chess_klt60.png",
+  wQ: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Chess_qlt60.png/120px-Chess_qlt60.png",
+  wR: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Chess_rlt60.png/120px-Chess_rlt60.png",
+  wB: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Chess_blt60.png/120px-Chess_blt60.png",
+  wN: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Chess_nlt60.png/120px-Chess_nlt60.png",
+  wP: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Chess_plt60.png/120px-Chess_plt60.png",
+  bK: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Chess_kdt60.png/120px-Chess_kdt60.png",
+  bQ: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Chess_qdt60.png/120px-Chess_qdt60.png",
+  bR: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Chess_rdt60.png/120px-Chess_rdt60.png",
+  bB: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Chess_bdt60.png/120px-Chess_bdt60.png",
+  bN: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Chess_ndt60.png/120px-Chess_ndt60.png",
+  bP: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Chess_pdt60.png/120px-Chess_pdt60.png",
 };
 
 const PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
@@ -160,7 +171,8 @@ export default function ChessApp() {
               const isLight = (rIdx + fIdx) % 2 === 0;
               const isSelected = selected === square;
               const isTarget = legalTargets.includes(square);
-              const piece = sq ? PIECE_GLYPHS[sq.color === "w" ? "w" + sq.type.toUpperCase() : "b" + sq.type.toUpperCase()] : null;
+              const pieceKey = sq ? (sq.color === "w" ? "w" + sq.type.toUpperCase() : "b" + sq.type.toUpperCase()) : null;
+              const pieceImg = pieceKey ? PIECE_IMAGES[pieceKey] : null;
               return (
                 <button
                   key={square}
@@ -174,16 +186,20 @@ export default function ChessApp() {
                       : "#7d5a3a",
                   }}
                 >
-                  <span
-                    className="select-none leading-none"
-                    style={{
-                      fontSize: "min(2.6rem, 7vw)",
-                      color: sq?.color === "w" ? "#fafafa" : "#1a1a1f",
-                      textShadow: sq?.color === "w" ? "0 1px 2px rgba(0,0,0,0.5)" : "0 1px 1px rgba(255,255,255,0.2)",
-                    }}
-                  >
-                    {piece}
-                  </span>
+                  {pieceImg && (
+                    <img
+                      src={pieceImg}
+                      alt={pieceKey}
+                      draggable={false}
+                      className="select-none pointer-events-none"
+                      style={{
+                        width: "82%",
+                        height: "82%",
+                        objectFit: "contain",
+                        filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.4))",
+                      }}
+                    />
+                  )}
                   {isTarget && (
                     <span className="absolute w-3 h-3 rounded-full bg-emerald-500/70 ring-2 ring-emerald-300/60 pointer-events-none" />
                   )}
