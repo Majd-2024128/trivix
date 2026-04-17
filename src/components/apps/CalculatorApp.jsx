@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Delete } from "lucide-react";
 
 export default function CalculatorApp() {
   const [display, setDisplay] = useState("0");
@@ -97,20 +96,22 @@ export default function CalculatorApp() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  // Button styles inspired by the icon: puffy white 3D keys on slate-blue, with lime-green accent
   const Btn = ({ children, onClick, variant = "num", span = 1, active = false }) => {
+    const base = "rounded-2xl text-2xl font-semibold transition-all duration-150 active:translate-y-[2px] active:shadow-none select-none";
     const styles = {
-      num: "bg-white/[0.06] hover:bg-white/[0.12] text-white",
-      fn: "bg-white/[0.14] hover:bg-white/[0.22] text-white",
+      num: "bg-gradient-to-b from-white to-[#e6ebf2] text-[#3a4654] shadow-[0_4px_0_#9aa6b6,0_6px_10px_rgba(0,0,0,0.18)] hover:from-white hover:to-[#eef2f7]",
+      fn: "bg-gradient-to-b from-[#cdd6e2] to-[#a9b5c5] text-[#2a3340] shadow-[0_4px_0_#7a8699,0_6px_10px_rgba(0,0,0,0.18)] hover:from-[#d6dee9] hover:to-[#b3bfce]",
       op: active
-        ? "bg-white text-orange-500"
-        : "bg-gradient-to-br from-orange-400 to-orange-600 hover:from-orange-300 hover:to-orange-500 text-white shadow-lg shadow-orange-500/20",
-      eq: "bg-gradient-to-br from-orange-400 to-orange-600 hover:from-orange-300 hover:to-orange-500 text-white shadow-lg shadow-orange-500/20",
+        ? "bg-white text-[#a8d531] shadow-[inset_0_3px_6px_rgba(0,0,0,0.15)]"
+        : "bg-gradient-to-b from-[#c6e85a] to-[#9bc91f] text-white shadow-[0_4px_0_#6b9415,0_6px_12px_rgba(155,201,31,0.35)] hover:from-[#d0ee6b] hover:to-[#a6d426]",
+      eq: "bg-gradient-to-b from-[#c6e85a] to-[#9bc91f] text-white shadow-[0_4px_0_#6b9415,0_6px_12px_rgba(155,201,31,0.35)] hover:from-[#d0ee6b] hover:to-[#a6d426]",
     };
     return (
       <button
         onClick={onClick}
-        className={`rounded-2xl text-xl font-medium transition-all duration-150 active:scale-95 ${styles[variant]}`}
-        style={{ gridColumn: span > 1 ? `span ${span}` : undefined, height: 56 }}
+        className={`${base} ${styles[variant]}`}
+        style={{ gridColumn: span > 1 ? `span ${span}` : undefined, height: 58 }}
       >
         {children}
       </button>
@@ -121,18 +122,18 @@ export default function CalculatorApp() {
 
   return (
     <div
-      className="flex flex-col h-full text-white font-space overflow-y-auto"
+      className="flex flex-col h-full font-space overflow-y-auto"
       style={{
-        background: "linear-gradient(160deg, #0a0a0c 0%, #1a1a1f 50%, #0f0f12 100%)",
+        background: "linear-gradient(160deg, #6a7d96 0%, #4e6178 50%, #3a4a5e 100%)",
       }}
     >
       {/* Display */}
-      <div className="flex-1 flex flex-col items-end justify-end px-6 pt-6 pb-4 min-h-[140px]">
-        <div className="text-white/40 text-sm font-light tracking-wider min-h-[20px] mb-1">
+      <div className="flex-1 flex flex-col items-end justify-end px-6 pt-8 pb-5 min-h-[150px]">
+        <div className="text-white/60 text-sm font-light tracking-wider min-h-[20px] mb-1">
           {expression}
         </div>
         <div
-          className="text-white font-extralight leading-none tracking-tight tabular-nums"
+          className="text-white font-light leading-none tracking-tight tabular-nums drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
           style={{ fontSize: display.length > 10 ? "2.25rem" : display.length > 7 ? "3rem" : "3.75rem" }}
         >
           {display}
@@ -140,7 +141,7 @@ export default function CalculatorApp() {
       </div>
 
       {/* Buttons */}
-      <div className="grid grid-cols-4 gap-2 p-4">
+      <div className="grid grid-cols-4 gap-3 p-5 pt-2">
         <Btn variant="fn" onClick={handleClear}>AC</Btn>
         <Btn variant="fn" onClick={handleSign}>+/−</Btn>
         <Btn variant="fn" onClick={handlePercent}>%</Btn>
@@ -167,7 +168,7 @@ export default function CalculatorApp() {
       </div>
 
       <div className="px-4 pb-3 text-center">
-        <p className="text-white/25 text-[10px] font-space">Copyright © 2026 Tejt</p>
+        <p className="text-white/40 text-[10px] font-space">Copyright © 2026 Tejt</p>
       </div>
     </div>
   );
