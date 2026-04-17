@@ -6,6 +6,7 @@ import WeatherApp from "../components/apps/WeatherApp";
 import NotesApp from "../components/apps/NotesApp";
 import CalendarApp from "../components/apps/CalendarApp";
 import QuestApp from "../components/apps/QuestApp";
+import ChessApp from "../components/apps/ChessApp";
 import Dock from "../components/desktop/Dock";
 import DesktopWindow from "../components/desktop/DesktopWindow";
 import SystemBar from "../components/desktop/SystemBar";
@@ -19,6 +20,7 @@ const APP_COMPONENTS = {
   notes: NotesApp,
   calendar: CalendarApp,
   quest: QuestApp,
+  chess: ChessApp,
 };
 
 const SETTINGS_APP = {
@@ -109,10 +111,11 @@ export default function Desktop() {
     <div
       className="fixed inset-0 overflow-hidden font-space select-none"
       style={{
-        background: wallpaper.startsWith("url(") ? undefined : wallpaper,
+        background: wallpaper.startsWith("url(") ? "#0a0a0c" : wallpaper,
         backgroundImage: wallpaper.startsWith("url(") ? wallpaper : undefined,
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center center",
         filter: `brightness(${brightness / 100})`,
       }}
     >
