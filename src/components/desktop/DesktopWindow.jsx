@@ -114,8 +114,6 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
     };
   }, [resizeDir]);
 
-  if (isMinimized) return null;
-
   const interacting = isDragging || !!resizeDir;
 
   return (
@@ -128,6 +126,7 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
         height: size.h,
         zIndex,
         transition: interacting ? "none" : "box-shadow 0.2s",
+        display: isMinimized ? "none" : "flex",
       }}
       onMouseDown={notifyFocus}
     >
@@ -146,7 +145,7 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
         <div className="w-8 h-1 rounded-full bg-white/20" />
       </div>
 
-      {/* Content */}
+      {/* Content - kept mounted while minimized so apps run in background */}
       <div className="w-full flex-1 relative overflow-hidden">
         <div className="w-full h-full" style={{ pointerEvents: interacting ? "none" : "auto" }}>
           {children}
@@ -156,12 +155,10 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
       {/* Resize handles (corners + edges) */}
       {!isMaximized && (
         <>
-          {/* Edges */}
           <div onMouseDown={startResize("n")} className="absolute top-0 left-3 right-3 h-1 cursor-n-resize z-50" />
           <div onMouseDown={startResize("s")} className="absolute bottom-0 left-3 right-3 h-1 cursor-s-resize z-50" />
           <div onMouseDown={startResize("w")} className="absolute top-3 bottom-3 left-0 w-1 cursor-w-resize z-50" />
           <div onMouseDown={startResize("e")} className="absolute top-3 bottom-3 right-0 w-1 cursor-e-resize z-50" />
-          {/* Corners */}
           <div onMouseDown={startResize("nw")} className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize z-50" />
           <div onMouseDown={startResize("ne")} className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize z-50" />
           <div onMouseDown={startResize("sw")} className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize z-50" />
