@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Chess } from "chess.js";
-import { RotateCcw, Cpu } from "lucide-react";
+import { RotateCcw, Cpu, Trophy, Frown } from "lucide-react";
 
 // 3D-rendered chess piece images (public domain Wikimedia "3D" set).
 const PIECE_IMAGES = {
@@ -10,7 +10,7 @@ const PIECE_IMAGES = {
   wB: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Chess_blt60.png/120px-Chess_blt60.png",
   wN: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Chess_nlt60.png/120px-Chess_nlt60.png",
   wP: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Chess_plt60.png/120px-Chess_plt60.png",
-  bK: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Chess_kdt60.png/120px-Chess_kdt60.png",
+  bK: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Chess_kdt60.png/120px-Chess_kdt60.png",
   bQ: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Chess_qdt60.png/120px-Chess_qdt60.png",
   bR: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Chess_rdt60.png/120px-Chess_rdt60.png",
   bB: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Chess_bdt60.png/120px-Chess_bdt60.png",
@@ -33,21 +33,16 @@ function evaluateBoard(game) {
   return score;
 }
 
-// Simple computer move: pick the best capture, else random legal move
 function pickComputerMove(game) {
   const moves = game.moves({ verbose: true });
   if (moves.length === 0) return null;
-
   let bestScore = -Infinity;
   let best = [];
-
   for (const move of moves) {
     const test = new Chess(game.fen());
     test.move(move);
     let score = evaluateBoard(test);
-    // Prefer captures
     if (move.captured) score += PIECE_VALUES[move.captured] * 0.5;
-    // Avoid moves that leave us in check
     if (test.inCheck() && test.turn() === "b") score -= 5;
     if (score > bestScore) {
       bestScore = score;
@@ -65,15 +60,18 @@ export default function ChessApp() {
   const [legalTargets, setLegalTargets] = useState([]);
   const [thinking, setThinking] = useState(false);
   const [statusMsg, setStatusMsg] = useState("Your move (White)");
+  const [endResult, setEndResult] = useState(null); // 'win' | 'lose' | 'draw' | null
 
   const board = useMemo(() => game.board(), [game]);
 
-  // Status updates
   useEffect(() => {
     if (game.isCheckmate()) {
-      setStatusMsg(game.turn() === "w" ? "Checkmate — Computer wins" : "Checkmate — You win!");
+      const playerLost = game.turn() === "w";
+      setStatusMsg(playerLost ? "Checkmate — Computer wins" : "Checkmate — You win!");
+      setEndResult(playerLost ? "lose" : "win");
     } else if (game.isDraw()) {
       setStatusMsg("Draw");
+      setEndResult("draw");
     } else if (game.isCheck()) {
       setStatusMsg(game.turn() === "w" ? "Check! Your move" : "Check on Computer");
     } else {
@@ -81,7 +79,6 @@ export default function ChessApp() {
     }
   }, [game]);
 
-  // Computer move when it's black's turn
   useEffect(() => {
     if (game.turn() !== "b" || game.isGameOver()) return;
     setThinking(true);
@@ -108,7 +105,6 @@ export default function ChessApp() {
         setLegalTargets([]);
         return;
       }
-      // Try the move
       const next = new Chess(game.fen());
       let move;
       try {
@@ -122,7 +118,6 @@ export default function ChessApp() {
         setLegalTargets([]);
         return;
       }
-      // If clicked own piece, switch selection
       if (piece && piece.color === "w") {
         setSelected(square);
         setLegalTargets(game.moves({ square, verbose: true }).map((m) => m.to));
@@ -140,12 +135,13 @@ export default function ChessApp() {
     setGame(new Chess());
     setSelected(null);
     setLegalTargets([]);
+    setEndResult(null);
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-[#1a1a1f] via-[#0f0f12] to-[#1a1a1f] text-white font-space overflow-y-auto">
+    <div className="relative flex flex-col h-full bg-gradient-to-br from-[#1a1a1f] via-[#0f0f12] to-[#1a1a1f] text-white font-space overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-2">
           <Cpu className="w-4 h-4 text-white/60" />
           <span className="text-sm font-medium">{statusMsg}</span>
@@ -159,11 +155,16 @@ export default function ChessApp() {
         </button>
       </div>
 
-      {/* Board */}
-      <div className="flex-1 flex items-center justify-center p-5">
+      {/* Board (auto-fits container) */}
+      <div className="flex-1 flex items-center justify-center p-3 min-h-0">
         <div
           className="grid grid-cols-8 grid-rows-8 rounded-lg overflow-hidden shadow-2xl shadow-black/40 ring-1 ring-white/10"
-          style={{ width: "min(420px, 100%)", aspectRatio: "1 / 1" }}
+          style={{
+            aspectRatio: "1 / 1",
+            height: "100%",
+            maxHeight: "100%",
+            maxWidth: "100%",
+          }}
         >
           {board.map((row, rIdx) =>
             row.map((sq, fIdx) => {
@@ -210,9 +211,54 @@ export default function ChessApp() {
         </div>
       </div>
 
-      <div className="px-5 py-2 border-t border-white/10 text-center">
+      <div className="px-5 py-2 border-t border-white/10 text-center shrink-0">
         <p className="text-white/25 text-[10px] font-space">Copyright © 2026 Tejt</p>
       </div>
+
+      {/* End-of-game overlay with animation */}
+      {endResult && (
+        <div
+          className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          style={{ animation: "fadeIn 0.4s ease-out" }}
+        >
+          <div
+            className="flex flex-col items-center gap-4 px-8 py-6 rounded-2xl border border-white/15"
+            style={{
+              background: endResult === "win"
+                ? "linear-gradient(160deg, rgba(34,197,94,0.25), rgba(15,23,42,0.9))"
+                : endResult === "lose"
+                ? "linear-gradient(160deg, rgba(220,38,38,0.25), rgba(15,23,42,0.9))"
+                : "linear-gradient(160deg, rgba(100,116,139,0.25), rgba(15,23,42,0.9))",
+              animation: "popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            }}
+          >
+            {endResult === "win" ? (
+              <Trophy className="w-14 h-14 text-yellow-400" style={{ animation: "bounce 1s infinite" }} />
+            ) : endResult === "lose" ? (
+              <Frown className="w-14 h-14 text-red-400" />
+            ) : (
+              <div className="text-4xl">🤝</div>
+            )}
+            <div className="text-2xl font-bold">
+              {endResult === "win" ? "Victory!" : endResult === "lose" ? "Defeated" : "Draw"}
+            </div>
+            <div className="text-sm text-white/60">
+              {endResult === "win" ? "Brilliant play." : endResult === "lose" ? "Better luck next time." : "A fair fight."}
+            </div>
+            <button
+              onClick={reset}
+              className="mt-2 px-5 py-2 rounded-lg bg-white text-black text-sm font-medium hover:bg-white/90 transition-colors"
+            >
+              Play Again
+            </button>
+          </div>
+          <style>{`
+            @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+            @keyframes popIn { 0% { transform: scale(0.5); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
+            @keyframes bounce { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-10px) } }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 }
