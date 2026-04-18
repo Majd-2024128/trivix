@@ -20,7 +20,8 @@ export default function SettingsApp({ onWallpaperChange, currentWallpaper, brigh
     setUploading(true);
     const reader = new FileReader();
     reader.onload = (ev) => {
-      onWallpaperChange(`url(${ev.target.result})`);
+      const imageUrl = typeof ev.target?.result === "string" ? `url("${ev.target.result}")` : null;
+      if (imageUrl) onWallpaperChange(imageUrl);
       setUploading(false);
     };
     reader.onerror = () => {
