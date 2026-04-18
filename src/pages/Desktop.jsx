@@ -39,9 +39,9 @@ export default function Desktop() {
   const [brightness, setBrightness] = useState(100);
   const [volume, setVolume] = useState(50);
   const [minimizedApps, setMinimizedApps] = useState(new Set());
+  const [desktopMenu, setDesktopMenu] = useState(null); // { x, y } | null
 
   const openApp = useCallback((app) => {
-    // If minimized, restore it
     if (minimizedApps.has(app.id)) {
       setMinimizedApps((prev) => {
         const next = new Set(prev);
@@ -81,6 +81,12 @@ export default function Desktop() {
     setFocusedControls(null);
   }, []);
 
+  const closeAllWindows = useCallback(() => {
+    setWindows([]);
+    setMinimizedApps(new Set());
+    setFocusedControls(null);
+  }, []);
+
   const minimizeWindow = useCallback((appId) => {
     setMinimizedApps((prev) => new Set(prev).add(appId));
   }, []);
@@ -91,44 +97,105 @@ export default function Desktop() {
     if (controls) setFocusedControls(controls);
   }, [nextZ]);
 
+  // Cycle through open (non-minimized) apps with Alt+S / Option+S
+  const cycleApps = useCallback(() => {
+    const visible = windows.filter((w) => !minimizedApps.has(w.app.id));
+    if (visible.length < 2) {
+      // If nothing visible but minimized exists, restore the first minimized
+      if (visible.length === 0 && minimizedApps.size > 0) {
+        const firstMin = windows.find((w) => minimizedApps.has(w.app.id));
+        if (firstMin) openApp(firstMin.app);
+      }
+      return;
+    }
+    // Find currently focused (highest z) and switch to the next one
+    const sorted = [...visible].sort((a, b) => b.zIndex - a.zIndex);
+    const next = sorted[1]; // second highest
+    setWindows((prev) => prev.map((w) => w.app.id === next.app.id ? { ...w, zIndex: nextZ } : w));
+    setNextZ((z) => z + 1);
+    setFocusedControls({
+      appName: next.app.name,
+      close: () => closeWindow(next.app.id),
+      minimize: () => minimizeWindow(next.app.id),
+      maximize: () => {},
+    });
+  }, [windows, minimizedApps, nextZ, openApp, closeWindow, minimizeWindow]);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.altKey && (e.key === "c" || e.key === "C")) {
+      if (e.altKey && (e.key === "c" || e.key === "C" || e.code === "KeyC")) {
         e.preventDefault();
-        if (focusedControls?.close) {
-          focusedControls.close();
-        }
+        if (focusedControls?.close) focusedControls.close();
+      } else if (e.altKey && (e.key === "s" || e.key === "S" || e.code === "KeyS")) {
+        e.preventDefault();
+        cycleApps();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [focusedControls]);
+  }, [focusedControls, cycleApps]);
+
+  // Dismiss desktop right-click menu on any click/escape
+  useEffect(() => {
+    if (!desktopMenu) return;
+    const dismiss = () => setDesktopMenu(null);
+    const onKey = (e) => { if (e.key === "Escape") setDesktopMenu(null); };
+    const t = setTimeout(() => {
+      window.addEventListener("mousedown", dismiss);
+      window.addEventListener("keydown", onKey);
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("mousedown", dismiss);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [desktopMenu]);
+
+  const handleDesktopContext = (e) => {
+    // Only show if right-clicking on the bare desktop, not on a window/dock
+    if (e.target !== e.currentTarget && !e.target.dataset?.desktopBg) return;
+    e.preventDefault();
+    setDesktopMenu({ x: e.clientX, y: e.clientY });
+  };
 
   const openAppIds = windows.map((w) => w.app.id);
   const isSettingsOpen = openAppIds.includes("settings");
 
+  // Wrap data URLs in quotes for safety; non-url backgrounds use the raw value as gradient.
+  const isImageWallpaper = wallpaper.startsWith("url(");
+  const wallpaperBgImage = isImageWallpaper ? wallpaper : undefined;
+  const wallpaperBgColor = isImageWallpaper ? "#0a0a0c" : undefined;
+  const wallpaperBackground = isImageWallpaper ? undefined : wallpaper;
+
   return (
     <div
       className="fixed inset-0 overflow-hidden font-space select-none"
+      data-desktop-bg="true"
+      onContextMenu={handleDesktopContext}
       style={{
-        background: wallpaper.startsWith("url(") ? "#0a0a0c" : wallpaper,
-        backgroundImage: wallpaper.startsWith("url(") ? wallpaper : undefined,
+        background: wallpaperBackground,
+        backgroundColor: wallpaperBgColor,
+        backgroundImage: wallpaperBgImage,
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center center",
         filter: `brightness(${brightness / 100})`,
       }}
     >
-      <div
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage: `
-            radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 80%, rgba(0,0,0,0.1) 0%, transparent 50%)
-          `,
-        }}
-      />
+      {/* Decorative overlay only for gradient wallpapers, not custom images */}
+      {!isImageWallpaper && (
+        <div
+          data-desktop-bg="true"
+          className="absolute inset-0 opacity-20 pointer-events-none"
+          style={{
+            backgroundImage: `
+              radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 80%, rgba(0,0,0,0.1) 0%, transparent 50%)
+            `,
+          }}
+        />
+      )}
 
       <MenuBar controls={focusedControls} />
 
@@ -164,6 +231,36 @@ export default function Desktop() {
       <SystemDock onOpenSettings={() => openApp(SETTINGS_APP)} isSettingsOpen={isSettingsOpen} onCloseSettings={() => closeWindow("settings")} />
       <Dock onOpenApp={openApp} openApps={openAppIds} onCloseApp={closeWindow} />
       <SystemBar />
+
+      {/* Desktop right-click menu */}
+      {desktopMenu && (
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          className="fixed z-[60] rounded-lg overflow-hidden shadow-2xl min-w-[200px]"
+          style={{
+            left: Math.min(desktopMenu.x, window.innerWidth - 220),
+            top: Math.min(desktopMenu.y, window.innerHeight - 140),
+            background: "rgba(30,30,30,0.95)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <button
+            onClick={() => { setDesktopMenu(null); openApp(SETTINGS_APP); }}
+            className="w-full px-4 py-2.5 text-left text-sm text-white/90 hover:bg-white/10 font-space transition-colors"
+          >
+            Customize Wallpaper
+          </button>
+          <div className="h-px bg-white/10" />
+          <button
+            onClick={() => { setDesktopMenu(null); closeAllWindows(); }}
+            disabled={windows.length === 0}
+            className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-white/10 font-space transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Close All Apps
+          </button>
+        </div>
+      )}
     </div>
   );
 }
