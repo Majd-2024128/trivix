@@ -80,6 +80,9 @@ export default function CalculatorApp() {
   // Keyboard support
   useEffect(() => {
     const onKey = (e) => {
+      // Don't capture when typing in an input/textarea
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
       const k = e.key;
       if (/[0-9]/.test(k)) handleNumber(k);
       else if (k === ".") handleNumber(".");
@@ -89,7 +92,7 @@ export default function CalculatorApp() {
       else if (k === "/") { e.preventDefault(); handleOp("÷"); }
       else if (k === "Enter" || k === "=") { e.preventDefault(); handleEquals(); }
       else if (k === "Backspace") handleBackspace();
-      else if (k === "Escape") handleClear();
+      else if (k === "Escape" || k === "c" || k === "C") handleClear();
       else if (k === "%") handlePercent();
     };
     window.addEventListener("keydown", onKey);
