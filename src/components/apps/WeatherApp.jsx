@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Cloud, Sun, CloudRain, CloudSnow, Wind, Droplets, Eye, Thermometer, CloudLightning, CloudDrizzle, Loader2 } from "lucide-react";
+import { useTheme } from "@/lib/ThemeContext";
 
 const API_KEY = "e340ed175acb50d6875920e74c14558a";
 
@@ -22,7 +23,7 @@ const WeatherIcon = ({ type, className = "w-5 h-5" }) => {
     case "drizzle": return <CloudDrizzle className={className} />;
     case "snow": return <CloudSnow className={className} />;
     case "thunder": return <CloudLightning className={className} />;
-    case "cloud": return <Cloud className={className} />;
+    case "cloud":
     case "cloud-sun":
     default: return <Cloud className={className} />;
   }
@@ -34,14 +35,12 @@ export default function WeatherApp() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [city, setCity] = useState("San Francisco");
+  const { isDark } = useTheme();
 
-  useEffect(() => {
-    fetchWeather(city);
-  }, []);
+  useEffect(() => { fetchWeather(city); }, []);
 
   const fetchWeather = async (q) => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const [wRes, fRes] = await Promise.all([
         fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(q)}&appid=${API_KEY}&units=metric`),
@@ -50,39 +49,29 @@ export default function WeatherApp() {
       if (!wRes.ok) throw new Error("City not found");
       const wData = await wRes.json();
       const fData = await fRes.json();
-      setWeather(wData);
-      setForecast(fData);
-      setCity(wData.name);
-    } catch (e) {
-      setError(e.message);
-    }
+      setWeather(wData); setForecast(fData); setCity(wData.name);
+    } catch (e) { setError(e.message); }
     setLoading(false);
   };
 
   const handleSearch = (e) => {
-    if (e.key === "Enter" && e.target.value.trim()) {
-      fetchWeather(e.target.value.trim());
-    }
+    if (e.key === "Enter" && e.target.value.trim()) fetchWeather(e.target.value.trim());
   };
 
+  const bgClass = isDark
+    ? "bg-gradient-to-b from-[#0c4a6e] to-[#075985]"
+    : "bg-gradient-to-b from-[#7dd3fc] to-[#38bdf8]";
+
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full bg-gradient-to-b from-[#0c4a6e] to-[#075985]">
-        <Loader2 className="w-8 h-8 text-white/50 animate-spin" />
-      </div>
-    );
+    return <div className={`flex items-center justify-center h-full ${bgClass}`}><Loader2 className="w-8 h-8 text-white/70 animate-spin" /></div>;
   }
 
   if (error || !weather) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-gradient-to-b from-[#0c4a6e] to-[#075985] text-white gap-4">
-        <p className="text-white/60">{error || "Failed to load weather"}</p>
-        <input
-          type="text"
-          placeholder="Search city..."
-          onKeyDown={handleSearch}
-          className="bg-white/10 text-white text-sm px-3 py-2 rounded-lg outline-none placeholder:text-white/30 w-48"
-        />
+      <div className={`flex flex-col items-center justify-center h-full ${bgClass} text-white gap-4`}>
+        <p className="text-white/70">{error || "Failed to load weather"}</p>
+        <input type="text" placeholder="Search city..." onKeyDown={handleSearch}
+          className="bg-white/20 text-white text-sm px-3 py-2 rounded-lg outline-none placeholder:text-white/50 w-48" />
       </div>
     );
   }
@@ -93,7 +82,6 @@ export default function WeatherApp() {
     icon: iconMap[item.weather[0].icon] || "cloud",
   })) || [];
 
-  // Group forecast by day
   const dailyMap = {};
   forecast?.list?.forEach((item) => {
     const day = new Date(item.dt * 1000).toLocaleDateString("en-US", { weekday: "short" });
@@ -101,59 +89,52 @@ export default function WeatherApp() {
     dailyMap[day].temps.push(item.main.temp);
   });
   const daily = Object.entries(dailyMap).slice(0, 7).map(([day, d]) => ({
-    day,
-    high: Math.round(Math.max(...d.temps)),
-    low: Math.round(Math.min(...d.temps)),
+    day, high: Math.round(Math.max(...d.temps)), low: Math.round(Math.min(...d.temps)),
     icon: iconMap[d.icon] || "cloud",
   }));
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-[#0c4a6e] to-[#075985] text-white font-space overflow-y-auto">
+    <div className={`flex flex-col h-full ${bgClass} text-white font-space overflow-y-auto`}>
       <div className="px-4 pt-3">
-        <input
-          type="text"
-          defaultValue={city}
-          onKeyDown={handleSearch}
-          className="bg-white/10 text-white text-xs px-3 py-1.5 rounded-lg outline-none placeholder:text-white/30 w-full"
-          placeholder="Search city..."
-        />
+        <input type="text" defaultValue={city} onKeyDown={handleSearch}
+          className="bg-white/15 text-white text-xs px-3 py-1.5 rounded-lg outline-none placeholder:text-white/40 w-full" placeholder="Search city..." />
       </div>
       <div className="text-center pt-4 pb-3">
-        <p className="text-white/60 text-sm">{weather.name}</p>
+        <p className="text-white/70 text-sm">{weather.name}</p>
         <p className="text-7xl font-thin mt-1">{Math.round(weather.main.temp)}°</p>
-        <p className="text-white/70 text-sm mt-1 capitalize">{weather.weather[0].description}</p>
-        <p className="text-white/50 text-sm">H:{Math.round(weather.main.temp_max)}° L:{Math.round(weather.main.temp_min)}°</p>
+        <p className="text-white/80 text-sm mt-1 capitalize">{weather.weather[0].description}</p>
+        <p className="text-white/60 text-sm">H:{Math.round(weather.main.temp_max)}° L:{Math.round(weather.main.temp_min)}°</p>
       </div>
 
       <div className="px-4 pb-4 space-y-3">
-        <div className="rounded-xl bg-white/10 backdrop-blur-sm p-3">
-          <p className="text-xs text-white/50 mb-3 border-b border-white/10 pb-2">HOURLY FORECAST</p>
+        <div className="rounded-xl bg-white/15 backdrop-blur-sm p-3">
+          <p className="text-xs text-white/60 mb-3 border-b border-white/15 pb-2">HOURLY FORECAST</p>
           <div className="flex gap-4 overflow-x-auto pb-1">
             {hourly.map((h, i) => (
               <div key={i} className="flex flex-col items-center gap-1 min-w-[40px]">
-                <span className="text-xs text-white/70">{i === 0 ? "Now" : h.time}</span>
-                <WeatherIcon type={h.icon} className="w-5 h-5 text-white/80" />
+                <span className="text-xs text-white/80">{i === 0 ? "Now" : h.time}</span>
+                <WeatherIcon type={h.icon} className="w-5 h-5 text-white/90" />
                 <span className="text-sm font-medium">{h.temp}°</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-xl bg-white/10 backdrop-blur-sm p-3">
-          <p className="text-xs text-white/50 mb-2 border-b border-white/10 pb-2">FORECAST</p>
+        <div className="rounded-xl bg-white/15 backdrop-blur-sm p-3">
+          <p className="text-xs text-white/60 mb-2 border-b border-white/15 pb-2">FORECAST</p>
           <div className="space-y-2">
             {daily.map((d, i) => (
               <div key={i} className="flex items-center gap-3">
-                <span className="text-sm w-12 text-white/70">{d.day}</span>
-                <WeatherIcon type={d.icon} className="w-4 h-4 text-white/70" />
-                <span className="text-xs text-white/40 w-8">{d.low}°</span>
-                <div className="flex-1 h-1 rounded-full bg-white/10 relative overflow-hidden">
+                <span className="text-sm w-12 text-white/80">{d.day}</span>
+                <WeatherIcon type={d.icon} className="w-4 h-4 text-white/80" />
+                <span className="text-xs text-white/50 w-8">{d.low}°</span>
+                <div className="flex-1 h-1 rounded-full bg-white/15 relative overflow-hidden">
                   <div className="absolute h-full rounded-full bg-gradient-to-r from-blue-400 to-orange-400" style={{
                     left: `${((d.low - (d.low - 5)) / 30) * 100}%`,
                     right: `${100 - ((d.high - (d.low - 5)) / 30) * 100}%`,
                   }} />
                 </div>
-                <span className="text-sm text-white/90 w-8">{d.high}°</span>
+                <span className="text-sm text-white w-8">{d.high}°</span>
               </div>
             ))}
           </div>
@@ -166,15 +147,15 @@ export default function WeatherApp() {
             { icon: <Thermometer className="w-4 h-4" />, label: "FEELS LIKE", value: `${Math.round(weather.main.feels_like)}°` },
             { icon: <Eye className="w-4 h-4" />, label: "VISIBILITY", value: `${(weather.visibility / 1000).toFixed(1)} km` },
           ].map((item, i) => (
-            <div key={i} className="rounded-xl bg-white/10 backdrop-blur-sm p-3">
-              <div className="flex items-center gap-1 text-white/50 text-xs mb-1">{item.icon}{item.label}</div>
+            <div key={i} className="rounded-xl bg-white/15 backdrop-blur-sm p-3">
+              <div className="flex items-center gap-1 text-white/60 text-xs mb-1">{item.icon}{item.label}</div>
               <p className="text-2xl font-light">{item.value}</p>
             </div>
           ))}
         </div>
 
         <div className="pt-4 pb-2 text-center">
-          <p className="text-white/30 text-[10px] font-space">Copyright © 2026 Tejt</p>
+          <p className="text-white/40 text-[10px] font-space">Copyright © 2026 Tejt</p>
         </div>
       </div>
     </div>
