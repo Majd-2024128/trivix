@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Chess } from "chess.js";
 import { RotateCcw, Cpu, Trophy, Frown } from "lucide-react";
+import { useTheme, themed } from "@/lib/ThemeContext";
 
 // 3D-rendered chess piece images (public domain Wikimedia "3D" set).
 const PIECE_IMAGES = {
@@ -61,6 +62,8 @@ export default function ChessApp() {
   const [thinking, setThinking] = useState(false);
   const [statusMsg, setStatusMsg] = useState("Your move (White)");
   const [endResult, setEndResult] = useState(null); // 'win' | 'lose' | 'draw' | null
+  const { isDark } = useTheme();
+  const t = themed(isDark);
 
   const board = useMemo(() => game.board(), [game]);
 
@@ -139,16 +142,22 @@ export default function ChessApp() {
   };
 
   return (
-    <div className="relative flex flex-col h-full bg-gradient-to-br from-[#1a1a1f] via-[#0f0f12] to-[#1a1a1f] text-white font-space overflow-hidden">
+    <div className={`relative flex flex-col h-full font-space overflow-hidden ${
+      isDark
+        ? "bg-gradient-to-br from-[#1a1a1f] via-[#0f0f12] to-[#1a1a1f] text-white"
+        : "bg-gradient-to-br from-[#f5f5f7] via-[#e5e5ea] to-[#f5f5f7] text-[#1c1c1e]"
+    }`}>
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 shrink-0">
+      <div className={`flex items-center justify-between px-5 py-3 border-b ${t.border} shrink-0`}>
         <div className="flex items-center gap-2">
-          <Cpu className="w-4 h-4 text-white/60" />
+          <Cpu className={`w-4 h-4 ${t.textMuted}`} />
           <span className="text-sm font-medium">{statusMsg}</span>
         </div>
         <button
           onClick={reset}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/10 hover:bg-white/20 transition-colors"
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors ${
+            isDark ? "bg-white/10 hover:bg-white/20" : "bg-black/10 hover:bg-black/20"
+          }`}
         >
           <RotateCcw className="w-3 h-3" />
           New Game
@@ -211,8 +220,8 @@ export default function ChessApp() {
         </div>
       </div>
 
-      <div className="px-5 py-2 border-t border-white/10 text-center shrink-0">
-        <p className="text-white/25 text-[10px] font-space">Copyright © 2026 Tejt</p>
+      <div className={`px-5 py-2 border-t ${t.border} text-center shrink-0`}>
+        <p className={`${t.textFaint} text-[10px] font-space`}>Copyright © 2026 Tejt</p>
       </div>
 
       {/* End-of-game overlay with animation */}
