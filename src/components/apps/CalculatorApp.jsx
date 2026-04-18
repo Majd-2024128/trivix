@@ -80,6 +80,9 @@ export default function CalculatorApp() {
   // Keyboard support
   useEffect(() => {
     const onKey = (e) => {
+      // Don't capture when typing in an input/textarea
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
       const k = e.key;
       if (/[0-9]/.test(k)) handleNumber(k);
       else if (k === ".") handleNumber(".");
@@ -89,7 +92,7 @@ export default function CalculatorApp() {
       else if (k === "/") { e.preventDefault(); handleOp("÷"); }
       else if (k === "Enter" || k === "=") { e.preventDefault(); handleEquals(); }
       else if (k === "Backspace") handleBackspace();
-      else if (k === "Escape") handleClear();
+      else if (k === "Escape" || k === "c" || k === "C") handleClear();
       else if (k === "%") handlePercent();
     };
     window.addEventListener("keydown", onKey);
@@ -98,7 +101,7 @@ export default function CalculatorApp() {
 
   // Button styles inspired by the icon: puffy white 3D keys on slate-blue, with lime-green accent
   const Btn = ({ children, onClick, variant = "num", span = 1, active = false }) => {
-    const base = "rounded-2xl text-2xl font-semibold transition-all duration-150 active:translate-y-[2px] active:shadow-none select-none";
+    const base = "rounded-2xl text-2xl font-semibold transition-all duration-150 active:translate-y-[2px] active:shadow-none select-none flex items-center justify-center min-h-[44px]";
     const styles = {
       num: "bg-gradient-to-b from-white to-[#e6ebf2] text-[#3a4654] shadow-[0_4px_0_#9aa6b6,0_6px_10px_rgba(0,0,0,0.18)] hover:from-white hover:to-[#eef2f7]",
       fn: "bg-gradient-to-b from-[#cdd6e2] to-[#a9b5c5] text-[#2a3340] shadow-[0_4px_0_#7a8699,0_6px_10px_rgba(0,0,0,0.18)] hover:from-[#d6dee9] hover:to-[#b3bfce]",
@@ -109,9 +112,10 @@ export default function CalculatorApp() {
     };
     return (
       <button
+        type="button"
         onClick={onClick}
         className={`${base} ${styles[variant]}`}
-        style={{ gridColumn: span > 1 ? `span ${span}` : undefined, height: 58 }}
+        style={{ gridColumn: span > 1 ? `span ${span}` : undefined }}
       >
         {children}
       </button>
@@ -122,26 +126,26 @@ export default function CalculatorApp() {
 
   return (
     <div
-      className="flex flex-col h-full font-space overflow-y-auto"
+      className="flex flex-col h-full font-space overflow-hidden"
       style={{
         background: "linear-gradient(160deg, #6a7d96 0%, #4e6178 50%, #3a4a5e 100%)",
       }}
     >
       {/* Display */}
-      <div className="flex-1 flex flex-col items-end justify-end px-6 pt-8 pb-5 min-h-[150px]">
-        <div className="text-white/60 text-sm font-light tracking-wider min-h-[20px] mb-1">
+      <div className="flex flex-col items-end justify-end px-6 pt-6 pb-4 min-h-[120px] shrink-0">
+        <div className="text-white/60 text-sm font-light tracking-wider min-h-[20px] mb-1 truncate w-full text-right">
           {expression}
         </div>
         <div
           className="text-white font-light leading-none tracking-tight tabular-nums drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
-          style={{ fontSize: display.length > 10 ? "2.25rem" : display.length > 7 ? "3rem" : "3.75rem" }}
+          style={{ fontSize: display.length > 10 ? "2rem" : display.length > 7 ? "2.75rem" : "3.5rem" }}
         >
           {display}
         </div>
       </div>
 
       {/* Buttons */}
-      <div className="grid grid-cols-4 gap-3 p-5 pt-2">
+      <div className="grid grid-cols-4 gap-2.5 p-4 pt-2 flex-1" style={{ gridAutoRows: "1fr" }}>
         <Btn variant="fn" onClick={handleClear}>AC</Btn>
         <Btn variant="fn" onClick={handleSign}>+/−</Btn>
         <Btn variant="fn" onClick={handlePercent}>%</Btn>
@@ -167,7 +171,7 @@ export default function CalculatorApp() {
         <Btn variant="eq" onClick={handleEquals}>=</Btn>
       </div>
 
-      <div className="px-4 pb-3 text-center">
+      <div className="px-4 pb-2 text-center shrink-0">
         <p className="text-white/40 text-[10px] font-space">Copyright © 2026 Tejt</p>
       </div>
     </div>

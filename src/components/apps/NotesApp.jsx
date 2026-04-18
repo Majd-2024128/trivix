@@ -1,14 +1,9 @@
 import { useState } from "react";
 import { Plus, Trash2, Search } from "lucide-react";
 
-const DEFAULT_NOTES = [
-  { id: 1, title: "Welcome to Notes", body: "Start writing your thoughts here. Click the + button to create a new note.", updated: Date.now() },
-  { id: 2, title: "Keyboard Tips", body: "All your notes are saved locally in this session.\n\nClick any note on the left to view and edit it.", updated: Date.now() - 60000 },
-];
-
 export default function NotesApp() {
-  const [notes, setNotes] = useState(DEFAULT_NOTES);
-  const [activeId, setActiveId] = useState(notes[0]?.id || null);
+  const [notes, setNotes] = useState([]);
+  const [activeId, setActiveId] = useState(null);
   const [search, setSearch] = useState("");
 
   const activeNote = notes.find((n) => n.id === activeId);
@@ -87,8 +82,10 @@ export default function NotesApp() {
               </div>
             </button>
           ))}
-          {filtered.length === 0 && (
-            <div className="text-center text-white/30 text-sm mt-8">No notes found</div>
+          {notes.length === 0 && (
+            <div className="text-center text-white/30 text-sm mt-8 px-4">
+              No notes yet.<br />Click + to create one.
+            </div>
           )}
         </div>
 
