@@ -12,6 +12,7 @@ import DesktopWindow from "../components/desktop/DesktopWindow";
 import SystemBar from "../components/desktop/SystemBar";
 import SystemDock from "../components/desktop/SystemDock";
 import SettingsApp from "../components/desktop/SettingsApp";
+import { useTheme } from "@/lib/ThemeContext";
 
 const APP_COMPONENTS = {
   calculator: CalculatorApp,
@@ -29,17 +30,32 @@ const SETTINGS_APP = {
   isSettings: true,
 };
 
-const DEFAULT_WALLPAPER = "linear-gradient(145deg, #1a472a 0%, #2d6a4f 25%, #40916c 50%, #52b788 75%, #74c69d 100%)";
+const DEFAULT_WALLPAPER_DARK = "linear-gradient(145deg, #1a472a 0%, #2d6a4f 25%, #40916c 50%, #52b788 75%, #74c69d 100%)";
+const DEFAULT_WALLPAPER_LIGHT = "linear-gradient(145deg, #e0f2fe 0%, #bae6fd 25%, #93c5fd 50%, #c4b5fd 75%, #fbcfe8 100%)";
 
 export default function Desktop() {
+  const { isDark } = useTheme();
   const [windows, setWindows] = useState([]);
   const [nextZ, setNextZ] = useState(10);
   const [focusedControls, setFocusedControls] = useState(null);
-  const [wallpaper, setWallpaper] = useState(DEFAULT_WALLPAPER);
+  const [wallpaper, setWallpaper] = useState(DEFAULT_WALLPAPER_DARK);
+  const [wallpaperCustomized, setWallpaperCustomized] = useState(false);
   const [brightness, setBrightness] = useState(100);
   const [volume, setVolume] = useState(50);
   const [minimizedApps, setMinimizedApps] = useState(new Set());
   const [desktopMenu, setDesktopMenu] = useState(null); // { x, y } | null
+
+  // Auto-swap default wallpaper when theme changes (only if user hasn't picked custom)
+  useEffect(() => {
+    if (!wallpaperCustomized) {
+      setWallpaper(isDark ? DEFAULT_WALLPAPER_DARK : DEFAULT_WALLPAPER_LIGHT);
+    }
+  }, [isDark, wallpaperCustomized]);
+
+  const handleWallpaperChange = useCallback((wp) => {
+    setWallpaper(wp);
+    setWallpaperCustomized(true);
+  }, []);
 
   const openApp = useCallback((app) => {
     if (minimizedApps.has(app.id)) {
@@ -239,7 +255,7 @@ export default function Desktop() {
           >
             {w.app.isSettings ? (
               <SettingsApp
-                onWallpaperChange={setWallpaper}
+                onWallpaperChange={handleWallpaperChange}
                 currentWallpaper={wallpaper}
                 brightness={brightness}
                 onBrightnessChange={setBrightness}
