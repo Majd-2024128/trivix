@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Sun, Moon, Volume2, Image, Upload } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 
-const WALLPAPERS = [
+const WALLPAPERS_DARK = [
   { id: "green", label: "Forest Green", style: "linear-gradient(145deg, #1a472a 0%, #2d6a4f 25%, #40916c 50%, #52b788 75%, #74c69d 100%)" },
   { id: "ocean", label: "Deep Ocean", style: "linear-gradient(145deg, #03045e 0%, #0077b6 40%, #00b4d8 100%)" },
   { id: "sunset", label: "Sunset", style: "linear-gradient(145deg, #370617 0%, #9d0208 30%, #f48c06 70%, #ffba08 100%)" },
@@ -12,12 +12,24 @@ const WALLPAPERS = [
   { id: "aurora", label: "Aurora", style: "linear-gradient(145deg, #00251a 0%, #006d77 35%, #83c5be 70%, #edf6f9 100%)" },
   { id: "lava", label: "Lava", style: "linear-gradient(145deg, #03071e 0%, #6a040f 40%, #dc2f02 75%, #faa307 100%)" },
   { id: "violet", label: "Violet Dream", style: "linear-gradient(145deg, #240046 0%, #5a189a 35%, #9d4edd 70%, #c77dff 100%)" },
-  { id: "mint", label: "Mint Cream", style: "linear-gradient(145deg, #d8f3dc 0%, #95d5b2 50%, #52b788 100%)" },
-  { id: "peach", label: "Peach", style: "linear-gradient(145deg, #ffe5d9 0%, #ffcad4 40%, #f4acb7 80%, #9d8189 100%)" },
-  { id: "sky", label: "Sky", style: "linear-gradient(145deg, #caf0f8 0%, #90e0ef 40%, #00b4d8 80%, #0077b6 100%)" },
   { id: "graphite", label: "Graphite", style: "linear-gradient(145deg, #212529 0%, #495057 50%, #adb5bd 100%)" },
   { id: "monochrome", label: "Monochrome", style: "linear-gradient(145deg, #000000 0%, #2d2d2d 50%, #595959 100%)" },
-  { id: "cherry", label: "Cherry Blossom", style: "linear-gradient(145deg, #ff9aa2 0%, #ffb7b2 30%, #ffdac1 60%, #e2f0cb 100%)" },
+  { id: "deepsky", label: "Deep Sky", style: "linear-gradient(145deg, #0077b6 0%, #023e8a 50%, #03045e 100%)" },
+];
+
+const WALLPAPERS_LIGHT = [
+  { id: "mint-l", label: "Mint Cream", style: "linear-gradient(145deg, #d8f3dc 0%, #95d5b2 50%, #52b788 100%)" },
+  { id: "peach-l", label: "Peach", style: "linear-gradient(145deg, #ffe5d9 0%, #ffcad4 40%, #f4acb7 80%, #9d8189 100%)" },
+  { id: "sky-l", label: "Sky", style: "linear-gradient(145deg, #caf0f8 0%, #90e0ef 40%, #00b4d8 80%, #0077b6 100%)" },
+  { id: "cherry-l", label: "Cherry Blossom", style: "linear-gradient(145deg, #ff9aa2 0%, #ffb7b2 30%, #ffdac1 60%, #e2f0cb 100%)" },
+  { id: "pastel-l", label: "Pastel", style: "linear-gradient(145deg, #e0f2fe 0%, #bae6fd 25%, #93c5fd 50%, #c4b5fd 75%, #fbcfe8 100%)" },
+  { id: "sand-l", label: "Sand", style: "linear-gradient(145deg, #fef9e7 0%, #fcefb4 50%, #f5d491 100%)" },
+  { id: "lavender-l", label: "Lavender", style: "linear-gradient(145deg, #f3e8ff 0%, #e9d5ff 50%, #d8b4fe 100%)" },
+  { id: "fresh-l", label: "Fresh Mint", style: "linear-gradient(145deg, #f0fdf4 0%, #bbf7d0 50%, #86efac 100%)" },
+  { id: "blush-l", label: "Blush", style: "linear-gradient(145deg, #fff1f2 0%, #ffe4e6 40%, #fecdd3 100%)" },
+  { id: "lemon-l", label: "Lemon", style: "linear-gradient(145deg, #fefce8 0%, #fef08a 50%, #fde047 100%)" },
+  { id: "coral-l", label: "Coral", style: "linear-gradient(145deg, #fff7ed 0%, #fed7aa 50%, #fdba74 100%)" },
+  { id: "ice-l", label: "Ice", style: "linear-gradient(145deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%)" },
 ];
 
 export default function SettingsApp({ onWallpaperChange, currentWallpaper, brightness, onBrightnessChange, volume, onVolumeChange }) {
@@ -77,7 +89,7 @@ export default function SettingsApp({ onWallpaperChange, currentWallpaper, brigh
             <span className={`text-sm font-medium ${t.textMuted}`}>Wallpaper</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {WALLPAPERS.map((wp) => (
+            {(isDark ? WALLPAPERS_DARK : WALLPAPERS_LIGHT).map((wp) => (
               <button
                 key={wp.id}
                 onClick={() => onWallpaperChange(wp.style)}

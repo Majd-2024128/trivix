@@ -1,9 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useTheme } from "@/lib/ThemeContext";
 
 const MIN_W = 360;
 const MIN_H = 260;
 
 export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPos, isMinimized, onMinimize, children }) {
+  const { isDark } = useTheme();
   const [pos, setPos] = useState(initialPos || { x: 80, y: 40 });
   const [size, setSize] = useState({ w: 720, h: 500 });
   const [isMaximized, setIsMaximized] = useState(false);
@@ -135,14 +137,14 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
         className="h-7 shrink-0 select-none flex items-center justify-center"
         style={{
           cursor: isMaximized ? "default" : "grab",
-          background: "rgba(30, 30, 30, 0.85)",
+          background: isDark ? "rgba(30, 30, 30, 0.85)" : "rgba(245, 245, 247, 0.9)",
           backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          borderBottom: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)",
         }}
         onMouseDown={handleMouseDownDrag}
         onDoubleClick={toggleMaximize}
       >
-        <div className="w-8 h-1 rounded-full bg-white/20" />
+        <div className={`w-8 h-1 rounded-full ${isDark ? "bg-white/20" : "bg-black/20"}`} />
       </div>
 
       {/* Content - kept mounted while minimized so apps run in background */}
