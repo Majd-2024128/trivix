@@ -1,8 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import systemIcon from "@/assets/system-icon.png";
+import systemIconLight from "@/assets/system-icon-light.png";
+import { useTheme } from "@/lib/ThemeContext";
 
 export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSettings }) {
+  const { isDark } = useTheme();
   const [hovered, setHovered] = useState(false);
   const [contextMenu, setContextMenu] = useState(false);
 
@@ -85,7 +88,7 @@ export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSett
             onContextMenu={handleContextMenu}
             className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-card shadow-lg ring-1 ring-white/10 transition-transform active:scale-95"
           >
-            <img src={systemIcon} alt="System" className="h-full w-full object-cover pointer-events-none" draggable={false} />
+            <img src={isDark ? systemIcon : systemIconLight} alt="System" className="h-full w-full object-cover pointer-events-none" draggable={false} />
           </button>
 
           {isSettingsOpen && (

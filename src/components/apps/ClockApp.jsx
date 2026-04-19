@@ -236,7 +236,7 @@ export default function ClockApp() {
         ))}
       </div>
       <div className={`py-1.5 border-t ${t.border} text-center ${isDark ? "bg-black/40" : "bg-black/5"}`}>
-        <p className={`${t.textFaint} text-[10px] font-space`}>Copyright © 2026 Tejt</p>
+        <p className={`${t.textFaint} text-[10px] font-space`}>Copyright © 2026 Trivix</p>
       </div>
     </div>
   );

@@ -84,7 +84,7 @@ export default function CalendarApp() {
       </div>
 
       <div className={`px-5 py-2 border-t ${t.border} text-center`}>
-        <p className={`${t.textFaint} text-[10px] font-space`}>Copyright © 2026 Tejt</p>
+        <p className={`${t.textFaint} text-[10px] font-space`}>Copyright © 2026 Trivix</p>
       </div>
     </div>
   );
