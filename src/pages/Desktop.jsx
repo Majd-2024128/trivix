@@ -71,15 +71,36 @@ export default function Desktop() {
     });
   }, [windows, nextZ, minimizedApps]);
 
+  // Focus the topmost remaining visible window, or clear focus if none
+  const focusTopmost = useCallback((excludeId, currentWindows, currentMinimized) => {
+    const visible = currentWindows.filter(
+      (w) => w.app.id !== excludeId && !currentMinimized.has(w.app.id)
+    );
+    if (visible.length === 0) {
+      setFocusedControls(null);
+      return;
+    }
+    const top = [...visible].sort((a, b) => b.zIndex - a.zIndex)[0];
+    setFocusedControls({
+      appName: top.app.name,
+      close: () => closeWindow(top.app.id),
+      minimize: () => minimizeWindow(top.app.id),
+      maximize: () => {},
+    });
+  }, []);
+
   const closeWindow = useCallback((appId) => {
-    setWindows((prev) => prev.filter((w) => w.app.id !== appId));
-    setMinimizedApps((prev) => {
-      const next = new Set(prev);
-      next.delete(appId);
+    setWindows((prev) => {
+      const next = prev.filter((w) => w.app.id !== appId);
+      setMinimizedApps((mPrev) => {
+        const m = new Set(mPrev);
+        m.delete(appId);
+        focusTopmost(appId, next, m);
+        return m;
+      });
       return next;
     });
-    setFocusedControls(null);
-  }, []);
+  }, [focusTopmost]);
 
   const closeAllWindows = useCallback(() => {
     setWindows([]);
@@ -88,8 +109,12 @@ export default function Desktop() {
   }, []);
 
   const minimizeWindow = useCallback((appId) => {
-    setMinimizedApps((prev) => new Set(prev).add(appId));
-  }, []);
+    setMinimizedApps((prev) => {
+      const next = new Set(prev).add(appId);
+      focusTopmost(appId, windows, next);
+      return next;
+    });
+  }, [windows, focusTopmost]);
 
   const focusWindow = useCallback((appId, controls) => {
     setWindows((prev) => prev.map((w) => w.app.id === appId ? { ...w, zIndex: nextZ } : w));
