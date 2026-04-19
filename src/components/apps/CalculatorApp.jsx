@@ -78,9 +78,10 @@ export default function CalculatorApp() {
   });
 
   // Style variants per theme
-  const numStyleDark = "bg-gradient-to-b from-white to-[#e6ebf2] text-[#3a4654] shadow-[0_4px_0_#9aa6b6,0_6px_10px_rgba(0,0,0,0.18)] hover:from-white hover:to-[#eef2f7]";
-  const fnStyleDark = "bg-gradient-to-b from-[#cdd6e2] to-[#a9b5c5] text-[#2a3340] shadow-[0_4px_0_#7a8699,0_6px_10px_rgba(0,0,0,0.18)] hover:from-[#d6dee9] hover:to-[#b3bfce]";
-  const opStyleDark = "bg-gradient-to-b from-[#c6e85a] to-[#9bc91f] text-white shadow-[0_4px_0_#6b9415,0_6px_12px_rgba(155,201,31,0.35)] hover:from-[#d0ee6b] hover:to-[#a6d426]";
+  // Dark mode: number buttons = dark grey w/ white digits, function buttons = black, operators = #22B14C
+  const numStyleDark = "bg-gradient-to-b from-[#4a4a4a] to-[#2e2e2e] text-white shadow-[0_4px_0_#1a1a1a,0_6px_10px_rgba(0,0,0,0.4)] hover:from-[#555555] hover:to-[#363636]";
+  const fnStyleDark = "bg-gradient-to-b from-[#2a2a2a] to-[#0f0f0f] text-white shadow-[0_4px_0_#000000,0_6px_10px_rgba(0,0,0,0.45)] hover:from-[#333333] hover:to-[#161616]";
+  const opStyleDark = "bg-gradient-to-b from-[#22B14C] to-[#178a37] text-white shadow-[0_4px_0_#0e5a23,0_6px_12px_rgba(34,177,76,0.4)] hover:from-[#27c554] hover:to-[#1ca042]";
 
   const numStyleLight = "bg-gradient-to-b from-white to-[#f0f4f9] text-[#1f2937] shadow-[0_3px_0_#cbd5e1,0_4px_8px_rgba(0,0,0,0.08)] hover:from-white hover:to-[#f7fafc]";
   const fnStyleLight = "bg-gradient-to-b from-[#e2e8f0] to-[#cbd5e1] text-[#1f2937] shadow-[0_3px_0_#94a3b8,0_4px_8px_rgba(0,0,0,0.1)] hover:from-[#edf2f7] hover:to-[#d6dee9]";
@@ -92,7 +93,7 @@ export default function CalculatorApp() {
       ? {
           num: numStyleDark,
           fn: fnStyleDark,
-          op: active ? "bg-white text-[#a8d531] shadow-[inset_0_3px_6px_rgba(0,0,0,0.15)]" : opStyleDark,
+          op: active ? "bg-white text-[#22B14C] shadow-[inset_0_3px_6px_rgba(0,0,0,0.2)]" : opStyleDark,
           eq: opStyleDark,
         }
       : {
@@ -110,7 +111,7 @@ export default function CalculatorApp() {
 
   const isActiveOp = (target) => op === target && reset;
   const containerBg = isDark
-    ? "linear-gradient(160deg, #6a7d96 0%, #4e6178 50%, #3a4a5e 100%)"
+    ? "linear-gradient(160deg, #1f1f1f 0%, #141414 50%, #0a0a0a 100%)"
     : "linear-gradient(160deg, #cbd5e1 0%, #94a3b8 50%, #64748b 100%)";
   const displayText = isDark ? "text-white" : "text-white";
   const expressionText = isDark ? "text-white/60" : "text-white/70";
