@@ -118,7 +118,7 @@ export default function SettingsApp({ onWallpaperChange, currentWallpaper, brigh
       </div>
 
       <div className={`px-6 py-4 border-t ${t.border} text-center`}>
-        <p className={`${t.textFaint} text-xs font-space`}>Copyright © 2026 Tejt</p>
+        <p className={`${t.textFaint} text-xs font-space`}>Copyright © 2026 Trivix</p>
       </div>
     </div>
   );
