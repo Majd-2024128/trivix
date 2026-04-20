@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Plus, Trash2, Search } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
+import { useNotesStore, addNote, deleteNote as storeDelete, updateNote as storeUpdate } from "@/lib/notesStore";
 
 export default function NotesApp() {
-  const [notes, setNotes] = useState([]);
+  const notes = useNotesStore();
   const [activeId, setActiveId] = useState(null);
   const [search, setSearch] = useState("");
   const { isDark } = useTheme();
@@ -11,20 +12,22 @@ export default function NotesApp() {
 
   const activeNote = notes.find((n) => n.id === activeId);
 
-  const addNote = () => {
-    const newNote = { id: Date.now(), title: "New Note", body: "", updated: Date.now() };
-    setNotes([newNote, ...notes]);
-    setActiveId(newNote.id);
+  const handleAdd = () => {
+    const created = addNote({ title: "New Note", body: "" });
+    setActiveId(created.id);
   };
 
-  const deleteNote = (id) => {
-    const filtered = notes.filter((n) => n.id !== id);
-    setNotes(filtered);
-    if (activeId === id) setActiveId(filtered[0]?.id || null);
+  const handleDelete = (id) => {
+    storeDelete(id);
+    if (activeId === id) {
+      const remaining = notes.filter((n) => n.id !== id);
+      setActiveId(remaining[0]?.id || null);
+    }
   };
 
-  const updateNote = (field, value) => {
-    setNotes(notes.map((n) => (n.id === activeId ? { ...n, [field]: value, updated: Date.now() } : n)));
+  const handleUpdate = (field, value) => {
+    if (activeId == null) return;
+    storeUpdate(activeId, { [field]: value });
   };
 
   const filtered = notes.filter(
