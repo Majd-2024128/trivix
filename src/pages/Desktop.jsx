@@ -249,9 +249,9 @@ export default function Desktop() {
   useEffect(() => {
     if (!showPicker) return;
     const dismiss = (e) => {
-      // Any mousedown that isn't inside the picker dialog dismisses.
-      const dialog = document.querySelector("[data-widget-picker-dialog]");
-      if (dialog && dialog.contains(e.target)) return;
+      // Only the inner dialog should block dismissal — the transparent overlay should not.
+      const inner = document.querySelector("[data-widget-picker-inner]");
+      if (inner && inner.contains(e.target)) return;
       setShowPicker(false);
     };
     const onKey = (e) => { if (e.key === "Escape") setShowPicker(false); };
@@ -315,6 +315,7 @@ export default function Desktop() {
         <WidgetHost
           key={w.id}
           widget={w}
+          allWidgets={widgets}
           onUpdate={(patch) => updateWidget(w.id, patch)}
           onRemove={() => removeWidget(w.id)}
           onFocus={() => focusWidget(w.id)}
