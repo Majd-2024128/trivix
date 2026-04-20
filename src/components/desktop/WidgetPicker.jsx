@@ -32,13 +32,13 @@ export default function WidgetPicker({ onAddWidget, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center"
-      onMouseDown={(e) => { /* outside-click dismiss handled by Desktop */ }}
+      className="fixed inset-0 z-[80] flex items-center justify-center pointer-events-none"
     >
       <div
+        data-widget-picker-inner
         onMouseDown={stop}
         onContextMenu={(e) => e.preventDefault()}
-        className={`relative rounded-2xl border ${surface} shadow-2xl backdrop-blur-2xl p-5 w-[480px] max-w-[92vw] font-space`}
+        className={`pointer-events-auto relative rounded-2xl border ${surface} shadow-2xl backdrop-blur-2xl p-5 w-[480px] max-w-[92vw] font-space animate-scale-in`}
       >
         <div className="flex items-center gap-2 mb-4">
           {pickingClock && (

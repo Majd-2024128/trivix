@@ -1,17 +1,27 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { X } from "lucide-react";
 import { GRID, getWidgetDef } from "@/lib/widgetDefs";
 
-// A single on-desktop widget. Snaps position & size to the GRID. Hover -> X close,
-// right-click -> Remove menu. Drag from anywhere except interactive controls/inputs.
-export default function WidgetHost({ widget, onUpdate, onRemove, onFocus }) {
+// Margin (in cells) kept between widgets and screen edges, and between widgets.
+const EDGE_MARGIN = 1; // 40px gap from screen edges (top & sides equal)
+const WIDGET_GAP = 1;  // 40px gap between widgets
+const DOCK_RESERVE = 120; // px reserved at bottom for dock
+
+// A single on-desktop widget. Snaps position & size to the GRID.
+// Right-click -> Remove menu. Drag from anywhere except interactive controls/inputs.
+export default function WidgetHost({ widget, onUpdate, onRemove, onFocus, allWidgets = [] }) {
   const def = getWidgetDef(widget.type);
-  const [hovered, setHovered] = useState(false);
   const [menu, setMenu] = useState(null); // {x,y}
   const [dragging, setDragging] = useState(false);
   const [resizing, setResizing] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const dragRef = useRef(null);
   const resizeRef = useRef(null);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
 
   if (!def) return null;
   const { Component, minSize, maxSize } = def;
@@ -23,8 +33,22 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus }) {
     height: widget.size.h * GRID,
   };
 
+  // Check overlap (with gap) against other widgets given a candidate rect.
+  const collides = (x, y, w, h) => {
+    return allWidgets.some((other) => {
+      if (other.id === widget.id) return false;
+      const ox = other.pos.x, oy = other.pos.y;
+      const ow = other.size.w, oh = other.size.h;
+      return (
+        x < ox + ow + WIDGET_GAP &&
+        x + w + WIDGET_GAP > ox &&
+        y < oy + oh + WIDGET_GAP &&
+        y + h + WIDGET_GAP > oy
+      );
+    });
+  };
+
   const handleMouseDown = useCallback((e) => {
-    // Don't start drag from interactive elements inside the widget.
     const tag = e.target.tagName;
     const interactive = ["INPUT", "TEXTAREA", "BUTTON", "SELECT", "A"].includes(tag) || e.target.closest("button, input, textarea, select, a");
     if (interactive) return;
@@ -41,24 +65,31 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus }) {
   useEffect(() => {
     if (!dragging) return;
     const onMove = (e) => {
-      const r = dragRef.current; if (!r) return;
-      const dx = Math.round((e.clientX - r.startX) / GRID);
-      const dy = Math.round((e.clientY - r.startY) / GRID);
-      const maxX = Math.floor((window.innerWidth - widget.size.w * GRID) / GRID);
-      const maxY = Math.floor((window.innerHeight - widget.size.h * GRID - 80) / GRID);
-      onUpdate({ pos: {
-        x: Math.max(0, Math.min(maxX, r.origX + dx)),
-        y: Math.max(1, Math.min(maxY, r.origY + dy)),
-      }});
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        const r = dragRef.current; if (!r) return;
+        const dx = Math.round((e.clientX - r.startX) / GRID);
+        const dy = Math.round((e.clientY - r.startY) / GRID);
+        const maxX = Math.floor((window.innerWidth - widget.size.w * GRID) / GRID) - EDGE_MARGIN;
+        const maxY = Math.floor((window.innerHeight - widget.size.h * GRID - DOCK_RESERVE) / GRID);
+        let nx = Math.max(EDGE_MARGIN, Math.min(maxX, r.origX + dx));
+        let ny = Math.max(EDGE_MARGIN + 1, Math.min(maxY, r.origY + dy)); // +1 for menu bar
+        if (collides(nx, ny, widget.size.w, widget.size.h)) return; // don't allow overlap
+        onUpdate({ pos: { x: nx, y: ny } });
+      });
     };
-    const onUp = () => setDragging(false);
+    const onUp = () => {
+      setDragging(false);
+      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
     return () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
     };
-  }, [dragging, widget.size.w, widget.size.h, onUpdate]);
+  }, [dragging, widget.size.w, widget.size.h, onUpdate, allWidgets]);
 
   const startResize = (e) => {
     e.preventDefault(); e.stopPropagation();
@@ -70,21 +101,35 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus }) {
   useEffect(() => {
     if (!resizing) return;
     const onMove = (e) => {
-      const r = resizeRef.current; if (!r) return;
-      const dw = Math.round((e.clientX - r.startX) / GRID);
-      const dh = Math.round((e.clientY - r.startY) / GRID);
-      const w = Math.max(minSize.w, Math.min(maxSize.w, r.origW + dw));
-      const h = Math.max(minSize.h, Math.min(maxSize.h, r.origH + dh));
-      onUpdate({ size: { w, h } });
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        const r = resizeRef.current; if (!r) return;
+        const dw = Math.round((e.clientX - r.startX) / GRID);
+        const dh = Math.round((e.clientY - r.startY) / GRID);
+        const w = Math.max(minSize.w, Math.min(maxSize.w, r.origW + dw));
+        const h = Math.max(minSize.h, Math.min(maxSize.h, r.origH + dh));
+        if (w === widget.size.w && h === widget.size.h) return;
+        if (collides(widget.pos.x, widget.pos.y, w, h)) return;
+        // also clamp inside screen
+        const maxRight = Math.floor(window.innerWidth / GRID) - EDGE_MARGIN;
+        const maxBottom = Math.floor((window.innerHeight - DOCK_RESERVE) / GRID);
+        if (widget.pos.x + w > maxRight) return;
+        if (widget.pos.y + h > maxBottom) return;
+        onUpdate({ size: { w, h } });
+      });
     };
-    const onUp = () => setResizing(false);
+    const onUp = () => {
+      setResizing(false);
+      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
     return () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
     };
-  }, [resizing, minSize, maxSize, onUpdate]);
+  }, [resizing, minSize, maxSize, onUpdate, allWidgets, widget.pos.x, widget.pos.y, widget.size.w, widget.size.h]);
 
   const handleContext = (e) => {
     e.preventDefault();
@@ -117,28 +162,18 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus }) {
         style={{
           ...px,
           zIndex: widget.zIndex || 5,
-          transition: dragging || resizing ? "none" : "box-shadow 0.15s",
+          transition: dragging || resizing
+            ? "none"
+            : "left 180ms cubic-bezier(0.22,1,0.36,1), top 180ms cubic-bezier(0.22,1,0.36,1), width 180ms cubic-bezier(0.22,1,0.36,1), height 180ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease, transform 220ms ease, box-shadow 0.15s",
           cursor: dragging ? "grabbing" : "grab",
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? "scale(1)" : "scale(0.92)",
+          willChange: dragging || resizing ? "left, top, width, height" : "auto",
         }}
         onMouseDown={handleMouseDown}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
         onContextMenu={handleContext}
       >
         <Component getMeta={getMeta} setMeta={setMeta} size={{ w: px.width, h: px.height }} instanceId={widget.id} />
-
-        {/* Hover X close */}
-        {hovered && (
-          <button
-            onMouseDown={(e) => { e.stopPropagation(); }}
-            onClick={(e) => { e.stopPropagation(); onRemove(); }}
-            className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/55 hover:bg-red-500 text-white flex items-center justify-center transition-colors"
-            title="Remove widget"
-            style={{ zIndex: 2 }}
-          >
-            <X className="w-3 h-3" />
-          </button>
-        )}
 
         {/* Resize handle (bottom-right) */}
         <div
@@ -155,7 +190,7 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus }) {
       {menu && (
         <div
           onMouseDown={(e) => e.stopPropagation()}
-          className="fixed z-[70] rounded-lg overflow-hidden shadow-2xl min-w-[160px]"
+          className="fixed z-[70] rounded-lg overflow-hidden shadow-2xl min-w-[160px] animate-scale-in"
           style={{
             left: Math.min(menu.x, window.innerWidth - 180),
             top: Math.min(menu.y, window.innerHeight - 80),
