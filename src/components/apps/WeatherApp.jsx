@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Cloud, Sun, CloudRain, CloudSnow, Wind, Droplets, Eye, Thermometer, CloudLightning, CloudDrizzle, Loader2 } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
+import { useWeatherCity, setWeatherCity } from "@/lib/weatherStore";
 
 const API_KEY = "e340ed175acb50d6875920e74c14558a";
 
@@ -34,10 +35,11 @@ export default function WeatherApp() {
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [city, setCity] = useState("San Francisco");
+  const sharedCity = useWeatherCity();
+  const [city, setCity] = useState(sharedCity);
   const { isDark } = useTheme();
 
-  useEffect(() => { fetchWeather(city); }, []);
+  useEffect(() => { fetchWeather(sharedCity); }, [sharedCity]);
 
   const fetchWeather = async (q) => {
     setLoading(true); setError(null);
@@ -49,7 +51,7 @@ export default function WeatherApp() {
       if (!wRes.ok) throw new Error("City not found");
       const wData = await wRes.json();
       const fData = await fRes.json();
-      setWeather(wData); setForecast(fData); setCity(wData.name);
+      setWeather(wData); setForecast(fData); setCity(wData.name); setWeatherCity(wData.name);
     } catch (e) { setError(e.message); }
     setLoading(false);
   };
