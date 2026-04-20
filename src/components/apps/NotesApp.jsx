@@ -50,7 +50,7 @@ export default function NotesApp() {
               className={`bg-transparent text-sm ${t.text} ${isDark ? "placeholder:text-white/30" : "placeholder:text-black/30"} outline-none w-full`}
             />
           </div>
-          <button onClick={addNote} className={`p-1.5 rounded-lg ${t.hover} transition-colors`}>
+          <button onClick={handleAdd} className={`p-1.5 rounded-lg ${t.hover} transition-colors`}>
             <Plus className="w-4 h-4 text-yellow-500" />
           </button>
         </div>
@@ -90,20 +90,20 @@ export default function NotesApp() {
               <span className={`text-xs ${t.textSubtle}`}>
                 {new Date(activeNote.updated).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
               </span>
-              <button onClick={() => deleteNote(activeNote.id)} className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors">
+              <button onClick={() => handleDelete(activeNote.id)} className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors">
                 <Trash2 className="w-4 h-4 text-red-400/60 hover:text-red-400" />
               </button>
             </div>
             <input
               type="text"
               value={activeNote.title}
-              onChange={(e) => updateNote("title", e.target.value)}
+              onChange={(e) => handleUpdate("title", e.target.value)}
               className={`bg-transparent text-xl font-semibold px-4 pt-4 pb-1 outline-none ${t.text} ${isDark ? "placeholder:text-white/20" : "placeholder:text-black/20"}`}
               placeholder="Title"
             />
             <textarea
               value={activeNote.body}
-              onChange={(e) => updateNote("body", e.target.value)}
+              onChange={(e) => handleUpdate("body", e.target.value)}
               className={`flex-1 bg-transparent text-sm ${isDark ? "text-white/80 placeholder:text-white/20" : "text-black/80 placeholder:text-black/20"} px-4 py-2 outline-none resize-none leading-relaxed`}
               placeholder="Start typing..."
             />
