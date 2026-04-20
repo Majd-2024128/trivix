@@ -88,7 +88,13 @@ export default function DockIcon({ app, onClick, isOpen, onClose }) {
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
         className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-card shadow-lg ring-1 ring-white/10"
       >
-        {typeof app.icon === "string" ? (
+        {app.iconDark && app.iconLight ? (
+          <div className="relative w-full h-full">
+            {/* Both icons stay in DOM; only opacity flips for instant theme swap */}
+            <img src={app.iconDark} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} style={{ opacity: app.useDark ? 1 : 0 }} />
+            <img src={app.iconLight} alt={app.name} className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} style={{ opacity: app.useDark ? 0 : 1 }} />
+          </div>
+        ) : typeof app.icon === "string" ? (
           <img src={app.icon} alt={app.name} className="w-full h-full object-cover pointer-events-none" draggable={false} />
         ) : (
           <span className="text-2xl">{app.icon}</span>

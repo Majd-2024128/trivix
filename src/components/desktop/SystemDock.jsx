@@ -88,7 +88,10 @@ export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSett
             onContextMenu={handleContextMenu}
             className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-card shadow-lg ring-1 ring-white/10 transition-transform active:scale-95"
           >
-            <img src={isDark ? systemIcon : systemIconLight} alt="System" className="h-full w-full object-cover pointer-events-none" draggable={false} />
+            <div className="relative h-full w-full">
+              <img src={systemIcon} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover pointer-events-none" draggable={false} style={{ opacity: isDark ? 1 : 0 }} />
+              <img src={systemIconLight} alt="System" className="absolute inset-0 h-full w-full object-cover pointer-events-none" draggable={false} style={{ opacity: isDark ? 0 : 1 }} />
+            </div>
           </button>
 
           {isSettingsOpen && (

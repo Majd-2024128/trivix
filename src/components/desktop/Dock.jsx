@@ -38,7 +38,14 @@ export default function Dock({ onOpenApp, openApps, onCloseApp }) {
   const apps = order
     .map((id) => APP_DEFS.find((a) => a.id === id))
     .filter(Boolean)
-    .map((a) => ({ id: a.id, name: a.name, icon: isDark ? a.iconDark : a.iconLight }));
+    .map((a) => ({
+      id: a.id,
+      name: a.name,
+      iconDark: a.iconDark,
+      iconLight: a.iconLight,
+      icon: isDark ? a.iconDark : a.iconLight,
+      useDark: isDark,
+    }));
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
