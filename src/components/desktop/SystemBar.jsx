@@ -86,7 +86,7 @@ function parseColor(str) {
   return null;
 }
 
-export default function SystemBar() {
+export default function SystemBar({ onDateClick }) {
   const [time, setTime] = useState(new Date());
   const [battery, setBattery] = useState(null);
   const [charging, setCharging] = useState(false);
@@ -178,10 +178,10 @@ export default function SystemBar() {
 
         <div className={`w-px h-4 ${dividerCls}`} />
 
-        <div className="flex flex-col items-end">
+        <button onClick={onDateClick} className="flex flex-col items-end">
           <span className={`${textPrimary} text-xs font-space font-semibold leading-none`}>{formattedTime}</span>
           <span className={`${textSecondary} text-xs font-space mt-0.5`}>{formattedDate}</span>
-        </div>
+        </button>
       </div>
     </div>
   );
