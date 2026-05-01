@@ -1,18 +1,22 @@
 import { useState, useRef } from "react";
-import { Sun, Moon, Volume2, Image, Upload } from "lucide-react";
+import { Sun, Moon, Volume2, Image, Upload, Monitor, Info, Layout, RotateCcw, ChevronRight } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 import { WALLPAPERS, gradientForTheme } from "@/lib/wallpapers";
 
+const SECTIONS = [
+  { id: "wallpaper", label: "Wallpaper", Icon: Image },
+  { id: "display", label: "Display", Icon: Monitor },
+  { id: "sound", label: "Sound", Icon: Volume2 },
+  { id: "desktop-dock", label: "Desktop & Dock", Icon: Layout },
+  { id: "about", label: "About", Icon: Info },
+];
+
 export default function SettingsApp({
-  onSelectWallpaper,
-  onUploadWallpaper,
-  currentWallpaperId,
-  isCustomWallpaper,
-  brightness,
-  onBrightnessChange,
-  volume,
-  onVolumeChange,
+  onSelectWallpaper, onUploadWallpaper, currentWallpaperId, isCustomWallpaper,
+  brightness, onBrightnessChange, volume, onVolumeChange,
+  autoIconSwitch, onAutoIconSwitchChange, dockAutoHide, onDockAutoHideChange, onReset,
 }) {
+  const [section, setSection] = useState("wallpaper");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
   const { toggle, isDark } = useTheme();
@@ -28,93 +32,153 @@ export default function SettingsApp({
       if (imageUrl) onUploadWallpaper(imageUrl);
       setUploading(false);
     };
-    reader.onerror = () => {
-      console.error("Failed to read file");
-      setUploading(false);
-    };
+    reader.onerror = () => setUploading(false);
     reader.readAsDataURL(file);
   };
 
+  const bg = isDark ? "bg-[#1c1c1e]" : "bg-white";
+  const sidebarBg = isDark ? "bg-[#151517]" : "bg-[#f0f0f2]";
+  const cardBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)";
+
   return (
-    <div className={`flex flex-col h-full ${isDark ? "bg-black text-white" : "bg-white text-[#1c1c1e]"} font-space overflow-y-auto`}>
-      <div className={`px-6 pt-5 pb-4 border-b ${t.border}`}>
-        <h1 className="text-lg font-semibold">System</h1>
+    <div className={`flex h-full ${bg} text-${isDark ? "white" : "[#1c1c1e]"} font-space overflow-hidden`}>
+      {/* Sidebar */}
+      <div className={`w-44 shrink-0 ${sidebarBg} border-r ${t.border} flex flex-col`}>
+        <div className={`px-4 pt-4 pb-3 border-b ${t.border}`}>
+          <h1 className="text-sm font-semibold">System</h1>
+        </div>
+        <div className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto">
+          {SECTIONS.map(({ id, label, Icon }) => (
+            <button
+              key={id}
+              onClick={() => setSection(id)}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-colors ${
+                section === id
+                  ? isDark ? "bg-white/10 text-white" : "bg-black/10 text-[#1c1c1e]"
+                  : isDark ? "text-white/60 hover:bg-white/5" : "text-black/60 hover:bg-black/5"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className={`px-3 py-3 border-t ${t.border}`}>
+          <button
+            onClick={onReset}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-red-400 hover:bg-red-500/10 transition-colors"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Reset All
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 px-6 py-5 space-y-8">
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            {isDark ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
-            <span className={`text-sm font-medium ${t.textMuted}`}>Appearance</span>
-          </div>
-          <div className="flex items-center justify-between rounded-xl px-4 py-3" style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)" }}>
-            <div>
-              <div className="text-sm font-medium">Dark Mode</div>
-              <div className={`text-xs ${t.textSubtle}`}>{isDark ? "Apps use a dark interface" : "Apps use a light interface"}</div>
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        {section === "wallpaper" && (
+          <div className="p-6 space-y-4">
+            <h2 className="text-base font-semibold mb-4">Wallpaper</h2>
+            <div className="grid grid-cols-3 gap-2">
+              {WALLPAPERS.map((wp) => {
+                const preview = gradientForTheme(wp, isDark);
+                const selected = !isCustomWallpaper && currentWallpaperId === wp.id;
+                return (
+                  <button
+                    key={wp.id}
+                    onClick={() => onSelectWallpaper(wp.id)}
+                    className={`h-16 rounded-lg transition-all ${selected ? "ring-2 ring-green-400 scale-95" : "hover:scale-95 opacity-80 hover:opacity-100"}`}
+                    style={wp.isImage ? { backgroundImage: preview, backgroundSize: "cover", backgroundPosition: "center" } : { background: preview }}
+                    title={wp.label}
+                  />
+                );
+              })}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className={`h-16 rounded-lg border ${isDark ? "border-white/20" : "border-black/20"} flex flex-col items-center justify-center gap-1 ${t.hover} transition-colors disabled:opacity-50 ${isCustomWallpaper ? "ring-2 ring-green-400" : ""}`}
+              >
+                <Upload className={`w-4 h-4 ${t.textMuted}`} />
+                <span className={`${t.textSubtle} text-xs`}>{uploading ? "..." : "Custom"}</span>
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
             </div>
-            <button
-              onClick={toggle}
-              className={`relative w-12 h-7 rounded-full transition-colors ${isDark ? "bg-indigo-500" : "bg-black/15"}`}
-              aria-label="Toggle dark mode"
-            >
-              <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all ${isDark ? "left-[22px]" : "left-0.5"}`} />
-            </button>
           </div>
-        </section>
+        )}
 
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            <Image className="w-4 h-4 text-green-400" />
-            <span className={`text-sm font-medium ${t.textMuted}`}>Wallpaper</span>
-            <span className={`ml-auto text-[10px] ${t.textFaint}`}>Auto-adapts to theme</span>
+        {section === "display" && (
+          <div className="p-6 space-y-6">
+            <h2 className="text-base font-semibold mb-4">Display</h2>
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Sun className="w-4 h-4 text-yellow-400" />
+                <span className={`text-sm font-medium ${t.textMuted}`}>Brightness</span>
+                <span className={`ml-auto text-sm ${t.textSubtle}`}>{brightness}%</span>
+              </div>
+              <input type="range" min={20} max={100} value={brightness} onChange={(e) => onBrightnessChange(Number(e.target.value))} className="w-full accent-yellow-400 cursor-pointer" />
+            </div>
+            <div className="rounded-xl px-4 py-3" style={{ background: cardBg }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium">Dark Mode</div>
+                  <div className={`text-xs ${t.textSubtle}`}>{isDark ? "Dark interface" : "Light interface"}</div>
+                </div>
+                <button onClick={toggle} className={`relative w-12 h-7 rounded-full transition-colors ${isDark ? "bg-indigo-500" : "bg-black/15"}`}>
+                  <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all ${isDark ? "left-[22px]" : "left-0.5"}`} />
+                </button>
+              </div>
+            </div>
+            <div className="rounded-xl px-4 py-3" style={{ background: cardBg }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium">Auto Icon Theme</div>
+                  <div className={`text-xs ${t.textSubtle}`}>{autoIconSwitch ? "Icons follow dark mode" : "Manual icon theme"}</div>
+                </div>
+                <button onClick={() => onAutoIconSwitchChange(!autoIconSwitch)} className={`relative w-12 h-7 rounded-full transition-colors ${autoIconSwitch ? "bg-green-500" : "bg-black/15"}`}>
+                  <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all ${autoIconSwitch ? "left-[22px]" : "left-0.5"}`} />
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            {WALLPAPERS.map((wp) => {
-              const preview = gradientForTheme(wp, isDark);
-              const selected = !isCustomWallpaper && currentWallpaperId === wp.id;
-              return (
-                <button
-                  key={wp.id}
-                  onClick={() => onSelectWallpaper(wp.id)}
-                  className={`h-14 rounded-lg transition-all ${selected ? "ring-2 ring-green-400 scale-95" : "hover:scale-95 opacity-80 hover:opacity-100"}`}
-                  style={{ background: preview }}
-                  title={wp.label}
-                />
-              );
-            })}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className={`h-14 rounded-lg border ${isDark ? "border-white/20" : "border-black/20"} flex flex-col items-center justify-center gap-1 ${t.hover} transition-colors disabled:opacity-50 ${isCustomWallpaper ? "ring-2 ring-green-400" : ""}`}
-            >
-              <Upload className={`w-4 h-4 ${t.textMuted}`} />
-              <span className={`${t.textSubtle} text-xs`}>{uploading ? "Loading..." : "Custom"}</span>
-            </button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-          </div>
-        </section>
+        )}
 
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            <Sun className="w-4 h-4 text-yellow-400" />
-            <span className={`text-sm font-medium ${t.textMuted}`}>Brightness</span>
-            <span className={`ml-auto text-sm ${t.textSubtle}`}>{brightness}%</span>
+        {section === "sound" && (
+          <div className="p-6 space-y-6">
+            <h2 className="text-base font-semibold mb-4">Sound</h2>
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Volume2 className="w-4 h-4 text-blue-400" />
+                <span className={`text-sm font-medium ${t.textMuted}`}>Volume</span>
+                <span className={`ml-auto text-sm ${t.textSubtle}`}>{volume}%</span>
+              </div>
+              <input type="range" min={0} max={100} value={volume} onChange={(e) => onVolumeChange(Number(e.target.value))} className="w-full accent-blue-400 cursor-pointer" />
+            </div>
           </div>
-          <input type="range" min={20} max={100} value={brightness} onChange={(e) => onBrightnessChange(Number(e.target.value))} className="w-full accent-yellow-400 cursor-pointer" />
-        </section>
+        )}
 
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            <Volume2 className="w-4 h-4 text-blue-400" />
-            <span className={`text-sm font-medium ${t.textMuted}`}>Volume</span>
-            <span className={`ml-auto text-sm ${t.textSubtle}`}>{volume}%</span>
+        {section === "desktop-dock" && (
+          <div className="p-6 space-y-6">
+            <h2 className="text-base font-semibold mb-4">Desktop & Dock</h2>
+            <div className="rounded-xl px-4 py-3" style={{ background: cardBg }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium">Auto-hide Dock</div>
+                  <div className={`text-xs ${t.textSubtle}`}>{dockAutoHide ? "Dock appears on hover" : "Dock always visible"}</div>
+                </div>
+                <button onClick={() => onDockAutoHideChange(!dockAutoHide)} className={`relative w-12 h-7 rounded-full transition-colors ${dockAutoHide ? "bg-green-500" : "bg-black/15"}`}>
+                  <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all ${dockAutoHide ? "left-[22px]" : "left-0.5"}`} />
+                </button>
+              </div>
+            </div>
           </div>
-          <input type="range" min={0} max={100} value={volume} onChange={(e) => onVolumeChange(Number(e.target.value))} className="w-full accent-blue-400 cursor-pointer" />
-        </section>
-      </div>
+        )}
 
-      <div className={`px-6 py-4 border-t ${t.border} text-center`}>
-        <p className={`${t.textFaint} text-xs font-space`}>Copyright © 2026 Trivix</p>
+        {section === "about" && (
+          <div className="p-6 flex flex-col items-center justify-center h-full">
+            <h2 className="text-xl font-bold mb-2">Trivix OS</h2>
+            <p className={`text-sm ${t.textMuted} mb-1`}>Version 1.0</p>
+            <p className={`text-[10px] ${t.textFaint}`}>Copyright © 2026 Tejt</p>
+          </div>
+        )}
       </div>
     </div>
   );

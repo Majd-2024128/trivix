@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import DockIcon from "./DockIcon";
 import { useTheme } from "@/lib/ThemeContext";
@@ -17,8 +17,12 @@ import questIconDark from "@/assets/quest-icon-dark.png";
 import questIconLight from "@/assets/quest-icon-light.png";
 import chessIconDark from "@/assets/chess-icon-dark.png";
 import chessIconLight from "@/assets/chess-icon.png";
+import filesIconDark from "@/assets/files-icon-dark.png";
+import filesIconLight from "@/assets/files-icon-light.png";
+import editorsIconDark from "@/assets/editors-icon-dark.png";
+import editorsIconLight from "@/assets/editors-icon-light.png";
 
-const APP_DEFS = [
+export const APP_DEFS = [
   { id: "weather", name: "Weather", iconDark: weatherIconDark, iconLight: weatherIconLight },
   { id: "calculator", name: "Calculator", iconDark: calculatorIconDark, iconLight: calculatorIconLight },
   { id: "calendar", name: "Calendar", iconDark: calendarIconDark, iconLight: calendarIconLight },
@@ -26,76 +30,100 @@ const APP_DEFS = [
   { id: "clock", name: "Clock", iconDark: clockIconDark, iconLight: clockIconLight },
   { id: "quest", name: "Quest", iconDark: questIconDark, iconLight: questIconLight },
   { id: "chess", name: "Chess", iconDark: chessIconDark, iconLight: chessIconLight },
+  { id: "files", name: "Files", iconDark: filesIconDark, iconLight: filesIconLight },
+  { id: "editors", name: "Editors", iconDark: editorsIconDark, iconLight: editorsIconLight },
 ];
 
-// Backwards-compat export (uses dark icon by default)
 export const APPS = APP_DEFS.map((a) => ({ id: a.id, name: a.name, icon: a.iconDark }));
 
-export default function Dock({ onOpenApp, openApps, onCloseApp }) {
-  const { isDark } = useTheme();
-  const [order, setOrder] = useState(APP_DEFS.map((a) => a.id));
+const DEFAULT_ORDER = APP_DEFS.map((a) => a.id);
 
-  const apps = order
+export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hiddenApps = [], onToggleHideApp }) {
+  const { isDark } = useTheme();
+  const [order, setOrder] = useState(() => {
+    try { const s = localStorage.getItem("trivix_dock_order"); return s ? JSON.parse(s) : DEFAULT_ORDER; } catch { return DEFAULT_ORDER; }
+  });
+  const [hovered, setHovered] = useState(false);
+
+  // Ensure new apps are in order
+  useEffect(() => {
+    const missing = DEFAULT_ORDER.filter((id) => !order.includes(id));
+    if (missing.length > 0) setOrder((prev) => [...prev, ...missing]);
+  }, []);
+
+  useEffect(() => { localStorage.setItem("trivix_dock_order", JSON.stringify(order)); }, [order]);
+
+  const visibleOrder = order.filter((id) => !hiddenApps.includes(id));
+
+  const apps = visibleOrder
     .map((id) => APP_DEFS.find((a) => a.id === id))
     .filter(Boolean)
-    .map((a) => ({
-      id: a.id,
-      name: a.name,
-      iconDark: a.iconDark,
-      iconLight: a.iconLight,
-      icon: isDark ? a.iconDark : a.iconLight,
-      useDark: isDark,
-    }));
+    .map((a) => ({ id: a.id, name: a.name, iconDark: a.iconDark, iconLight: a.iconLight, icon: isDark ? a.iconDark : a.iconLight, useDark: isDark }));
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-    const reordered = Array.from(order);
-    const [removed] = reordered.splice(result.source.index, 1);
-    reordered.splice(result.destination.index, 0, removed);
-    setOrder(reordered);
+    const visIds = visibleOrder.slice();
+    const [removed] = visIds.splice(result.source.index, 1);
+    visIds.splice(result.destination.index, 0, removed);
+    // Rebuild full order preserving hidden apps in their relative positions
+    const newOrder = [...visIds, ...order.filter((id) => hiddenApps.includes(id))];
+    setOrder(newOrder);
   };
 
   const containerCls = isDark
     ? "border-white/15 bg-white/[0.18] shadow-black/25"
     : "border-black/10 bg-white/55 shadow-black/15";
 
+  const show = autoHide ? hovered : true;
+
   return (
-    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50">
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="dock" direction="horizontal">
-          {(provided) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-              className={`flex flex-row items-end gap-2 rounded-[20px] border px-4 py-2 shadow-2xl backdrop-blur-2xl ${containerCls}`}
-            >
-              {apps.map((app, index) => (
-                <Draggable key={app.id} draggableId={app.id} index={index}>
-                  {(dragProvided, snapshot) => (
-                    <div
-                      ref={dragProvided.innerRef}
-                      {...dragProvided.draggableProps}
-                      {...dragProvided.dragHandleProps}
-                      style={{
-                        ...dragProvided.draggableProps.style,
-                        opacity: snapshot.isDragging ? 0.85 : 1,
-                      }}
-                    >
-                      <DockIcon
-                        app={app}
-                        onClick={() => onOpenApp(app)}
-                        isOpen={openApps.includes(app.id)}
-                        onClose={() => onCloseApp(app.id)}
-                      />
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+    <div
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ paddingBottom: 12, paddingTop: autoHide ? 20 : 0 }}
+    >
+      <div
+        style={{
+          transition: "transform 0.3s cubic-bezier(0.22,1,0.36,1), opacity 0.3s",
+          transform: show ? "translateY(0)" : "translateY(calc(100% + 20px))",
+          opacity: show ? 1 : 0,
+        }}
+      >
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="dock" direction="horizontal">
+            {(provided) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className={`flex flex-row items-end gap-2 rounded-[20px] border px-4 py-2 shadow-2xl backdrop-blur-2xl ${containerCls}`}
+              >
+                {apps.map((app, index) => (
+                  <Draggable key={app.id} draggableId={app.id} index={index}>
+                    {(dragProvided, snapshot) => (
+                      <div
+                        ref={dragProvided.innerRef}
+                        {...dragProvided.draggableProps}
+                        {...dragProvided.dragHandleProps}
+                        style={{ ...dragProvided.draggableProps.style, opacity: snapshot.isDragging ? 0.85 : 1 }}
+                      >
+                        <DockIcon
+                          app={app}
+                          onClick={() => onOpenApp(app)}
+                          isOpen={openApps.includes(app.id)}
+                          onClose={() => onCloseApp(app.id)}
+                          onHideFromDock={onToggleHideApp ? () => onToggleHideApp(app.id) : undefined}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </div>
     </div>
   );
 }

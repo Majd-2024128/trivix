@@ -151,7 +151,7 @@ export default function CalculatorApp() {
       </div>
 
       <div className="px-4 pb-2 text-center shrink-0">
-        <p className="text-white/40 text-[10px] font-space">Copyright © 2026 Trivix</p>
+        <p className="text-white/40 text-[10px] font-space">Copyright © 2026 Tejt</p>
       </div>
     </div>
   );

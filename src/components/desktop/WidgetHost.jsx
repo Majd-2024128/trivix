@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { GRID, getWidgetDef } from "@/lib/widgetDefs";
 
-// Margin (in cells) kept between widgets and screen edges, and between widgets.
-const EDGE_MARGIN = 1; // 40px gap from screen edges (top & sides equal)
-const WIDGET_GAP = 1;  // 40px gap between widgets
-const DOCK_RESERVE = 120; // px reserved at bottom for dock
+const EDGE_MARGIN = 1; // 20px from edges
+const WIDGET_GAP = 1;  // 20px between widgets
+const DOCK_RESERVE = 80;
+const MENU_BAR_CELLS = 2; // 40px top
 
-// A single on-desktop widget. Snaps position & size to the GRID.
-// Right-click -> Remove menu. Drag from anywhere except interactive controls/inputs.
 export default function WidgetHost({ widget, onUpdate, onRemove, onFocus, allWidgets = [] }) {
   const def = getWidgetDef(widget.type);
-  const [menu, setMenu] = useState(null); // {x,y}
+  const [menu, setMenu] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [resizing, setResizing] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -28,37 +26,33 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus, allWid
 
   const px = {
     left: widget.pos.x * GRID,
-    top:  widget.pos.y * GRID,
-    width:  widget.size.w * GRID,
+    top: widget.pos.y * GRID,
+    width: widget.size.w * GRID,
     height: widget.size.h * GRID,
   };
 
-  // Check overlap (with gap) against other widgets given a candidate rect.
   const collides = (x, y, w, h) => {
     return allWidgets.some((other) => {
       if (other.id === widget.id) return false;
-      const ox = other.pos.x, oy = other.pos.y;
-      const ow = other.size.w, oh = other.size.h;
       return (
-        x < ox + ow + WIDGET_GAP &&
-        x + w + WIDGET_GAP > ox &&
-        y < oy + oh + WIDGET_GAP &&
-        y + h + WIDGET_GAP > oy
+        x < other.pos.x + other.size.w + WIDGET_GAP &&
+        x + w + WIDGET_GAP > other.pos.x &&
+        y < other.pos.y + other.size.h + WIDGET_GAP &&
+        y + h + WIDGET_GAP > other.pos.y
       );
     });
   };
 
+  const maxCols = Math.floor(window.innerWidth / GRID) - EDGE_MARGIN;
+  const maxRows = Math.floor((window.innerHeight - DOCK_RESERVE) / GRID);
+
   const handleMouseDown = useCallback((e) => {
     const tag = e.target.tagName;
-    const interactive = ["INPUT", "TEXTAREA", "BUTTON", "SELECT", "A"].includes(tag) || e.target.closest("button, input, textarea, select, a");
-    if (interactive) return;
+    if (["INPUT", "TEXTAREA", "BUTTON", "SELECT", "A"].includes(tag) || e.target.closest("button, input, textarea, select, a")) return;
     if (e.button !== 0) return;
     e.preventDefault();
     onFocus?.();
-    dragRef.current = {
-      startX: e.clientX, startY: e.clientY,
-      origX: widget.pos.x, origY: widget.pos.y,
-    };
+    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: widget.pos.x, origY: widget.pos.y };
     setDragging(true);
   }, [widget.pos.x, widget.pos.y, onFocus]);
 
@@ -68,14 +62,13 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus, allWid
       if (rafRef.current) return;
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = null;
-        const r = dragRef.current; if (!r) return;
+        const r = dragRef.current;
+        if (!r) return;
         const dx = Math.round((e.clientX - r.startX) / GRID);
         const dy = Math.round((e.clientY - r.startY) / GRID);
-        const maxX = Math.floor((window.innerWidth - widget.size.w * GRID) / GRID) - EDGE_MARGIN;
-        const maxY = Math.floor((window.innerHeight - widget.size.h * GRID - DOCK_RESERVE) / GRID);
-        let nx = Math.max(EDGE_MARGIN, Math.min(maxX, r.origX + dx));
-        let ny = Math.max(EDGE_MARGIN + 1, Math.min(maxY, r.origY + dy)); // +1 for menu bar
-        if (collides(nx, ny, widget.size.w, widget.size.h)) return; // don't allow overlap
+        let nx = Math.max(EDGE_MARGIN, Math.min(maxCols - widget.size.w, r.origX + dx));
+        let ny = Math.max(MENU_BAR_CELLS, Math.min(maxRows - widget.size.h, r.origY + dy));
+        if (collides(nx, ny, widget.size.w, widget.size.h)) return;
         onUpdate({ pos: { x: nx, y: ny } });
       });
     };
@@ -85,10 +78,7 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus, allWid
     };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
+    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
   }, [dragging, widget.size.w, widget.size.h, onUpdate, allWidgets]);
 
   const startResize = (e) => {
@@ -104,18 +94,16 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus, allWid
       if (rafRef.current) return;
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = null;
-        const r = resizeRef.current; if (!r) return;
+        const r = resizeRef.current;
+        if (!r) return;
         const dw = Math.round((e.clientX - r.startX) / GRID);
         const dh = Math.round((e.clientY - r.startY) / GRID);
         const w = Math.max(minSize.w, Math.min(maxSize.w, r.origW + dw));
         const h = Math.max(minSize.h, Math.min(maxSize.h, r.origH + dh));
         if (w === widget.size.w && h === widget.size.h) return;
         if (collides(widget.pos.x, widget.pos.y, w, h)) return;
-        // also clamp inside screen
-        const maxRight = Math.floor(window.innerWidth / GRID) - EDGE_MARGIN;
-        const maxBottom = Math.floor((window.innerHeight - DOCK_RESERVE) / GRID);
-        if (widget.pos.x + w > maxRight) return;
-        if (widget.pos.y + h > maxBottom) return;
+        if (widget.pos.x + w > maxCols) return;
+        if (widget.pos.y + h > maxRows) return;
         onUpdate({ size: { w, h } });
       });
     };
@@ -125,15 +113,11 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus, allWid
     };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
+    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
   }, [resizing, minSize, maxSize, onUpdate, allWidgets, widget.pos.x, widget.pos.y, widget.size.w, widget.size.h]);
 
   const handleContext = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     setMenu({ x: e.clientX, y: e.clientY });
   };
 
@@ -145,11 +129,7 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus, allWid
       window.addEventListener("mousedown", dismiss);
       window.addEventListener("keydown", onKey);
     }, 0);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener("mousedown", dismiss);
-      window.removeEventListener("keydown", onKey);
-    };
+    return () => { clearTimeout(t); window.removeEventListener("mousedown", dismiss); window.removeEventListener("keydown", onKey); };
   }, [menu]);
 
   const getMeta = () => widget.meta || {};
@@ -163,8 +143,8 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus, allWid
           ...px,
           zIndex: widget.zIndex || 5,
           transition: dragging || resizing
-            ? "none"
-            : "left 180ms cubic-bezier(0.22,1,0.36,1), top 180ms cubic-bezier(0.22,1,0.36,1), width 180ms cubic-bezier(0.22,1,0.36,1), height 180ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease, transform 220ms ease, box-shadow 0.15s",
+            ? "box-shadow 0.15s"
+            : "left 200ms cubic-bezier(0.22,1,0.36,1), top 200ms cubic-bezier(0.22,1,0.36,1), width 200ms cubic-bezier(0.22,1,0.36,1), height 200ms cubic-bezier(0.22,1,0.36,1), opacity 250ms ease, transform 250ms ease, box-shadow 0.15s",
           cursor: dragging ? "grabbing" : "grab",
           opacity: mounted ? 1 : 0,
           transform: mounted ? "scale(1)" : "scale(0.92)",
@@ -174,19 +154,10 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus, allWid
         onContextMenu={handleContext}
       >
         <Component getMeta={getMeta} setMeta={setMeta} size={{ w: px.width, h: px.height }} instanceId={widget.id} />
-
-        {/* Resize handle (bottom-right) */}
-        <div
-          onMouseDown={startResize}
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
-          style={{ zIndex: 3 }}
-          title="Resize"
-        >
+        <div onMouseDown={startResize} className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize" style={{ zIndex: 3 }} title="Resize">
           <div className="absolute bottom-1 right-1 w-2 h-2 border-r-2 border-b-2 border-white/50 rounded-br-sm" />
         </div>
       </div>
-
-      {/* Right-click remove menu */}
       {menu && (
         <div
           onMouseDown={(e) => e.stopPropagation()}
@@ -194,15 +165,10 @@ export default function WidgetHost({ widget, onUpdate, onRemove, onFocus, allWid
           style={{
             left: Math.min(menu.x, window.innerWidth - 180),
             top: Math.min(menu.y, window.innerHeight - 80),
-            background: "rgba(30,30,30,0.95)",
-            backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(30,30,30,0.95)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.12)",
           }}
         >
-          <button
-            onClick={() => { setMenu(null); onRemove(); }}
-            className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-white/10 font-space transition-colors"
-          >
+          <button onClick={() => { setMenu(null); onRemove(); }} className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-white/10 font-space transition-colors">
             Remove Widget
           </button>
         </div>

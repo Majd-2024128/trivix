@@ -112,7 +112,7 @@ export default function NotesApp() {
           <div className={`flex-1 flex items-center justify-center ${t.textFaint} text-sm`}>Select a note or create a new one</div>
         )}
         <div className={`px-4 py-1.5 border-t ${t.border} text-center`}>
-          <p className={`${t.textFaint} text-[10px] font-space`}>Copyright © 2026 Trivix</p>
+          <p className={`${t.textFaint} text-[10px] font-space`}>Copyright © 2026 Tejt</p>
         </div>
       </div>
     </div>
