@@ -4,50 +4,50 @@ import CalendarWidget from "@/components/widgets/CalendarWidget";
 import ClockWidget from "@/components/widgets/ClockWidget";
 import CalculatorWidget from "@/components/widgets/CalculatorWidget";
 
-// Snap grid: 40px cells. Sizes are expressed in cells (cellW x cellH).
-export const GRID = 40;
+// Snap grid: 20px cells.
+export const GRID = 20;
 
 // Each widget: default size (in cells), min/max size (cells), and component.
 export const WIDGET_DEFS = [
   {
     id: "weather",
     name: "Weather",
-    defaultSize: { w: 5, h: 4 },        // 200x160
-    minSize: { w: 4, h: 3 },             // 160x120
-    maxSize: { w: 8, h: 6 },             // 320x240
+    defaultSize: { w: 10, h: 8 },
+    minSize: { w: 8, h: 6 },
+    maxSize: { w: 16, h: 12 },
     Component: WeatherWidget,
   },
   {
     id: "notes",
     name: "Sticky Notes",
-    defaultSize: { w: 5, h: 5 },         // 200x200
-    minSize: { w: 4, h: 3 },
-    maxSize: { w: 9, h: 9 },
+    defaultSize: { w: 10, h: 10 },
+    minSize: { w: 8, h: 6 },
+    maxSize: { w: 18, h: 18 },
     Component: NotesWidget,
   },
   {
     id: "calendar",
     name: "Calendar",
-    defaultSize: { w: 5, h: 5 },
-    minSize: { w: 4, h: 4 },
-    maxSize: { w: 7, h: 6 },
+    defaultSize: { w: 10, h: 10 },
+    minSize: { w: 8, h: 8 },
+    maxSize: { w: 14, h: 12 },
     Component: CalendarWidget,
   },
   {
     id: "clock",
     name: "Clock",
-    defaultSize: { w: 5, h: 5 },
-    minSize: { w: 4, h: 4 },
-    maxSize: { w: 8, h: 8 },
+    defaultSize: { w: 10, h: 10 },
+    minSize: { w: 8, h: 8 },
+    maxSize: { w: 16, h: 16 },
     Component: ClockWidget,
-    requiresPick: "clockStyle", // picker shows secondary style choice
+    requiresPick: "clockStyle",
   },
   {
     id: "calculator",
     name: "Calculator",
-    defaultSize: { w: 5, h: 7 },        // ~ 2 wide x 1 tall in 40px? user said default 2:1, get bigger
-    minSize: { w: 5, h: 7 },             // can't shrink below this so buttons fit
-    maxSize: { w: 9, h: 12 },
+    defaultSize: { w: 10, h: 14 },
+    minSize: { w: 10, h: 14 },
+    maxSize: { w: 18, h: 24 },
     Component: CalculatorWidget,
   },
 ];
