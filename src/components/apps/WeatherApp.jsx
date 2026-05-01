@@ -157,7 +157,7 @@ export default function WeatherApp() {
         </div>
 
         <div className="pt-4 pb-2 text-center">
-          <p className="text-white/40 text-[10px] font-space">Copyright © 2026 Trivix</p>
+          <p className="text-white/40 text-[10px] font-space">Copyright © 2026 Tejt</p>
         </div>
       </div>
     </div>
