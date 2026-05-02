@@ -1,20 +1,18 @@
 import { useState, useRef } from "react";
-import { Sun, Moon, Volume2, Image, Upload, Monitor, Info, Layout, RotateCcw, ChevronRight } from "lucide-react";
+import { Sun, Image, Upload, Monitor, Info, Layout, RotateCcw } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 import { WALLPAPERS, gradientForTheme } from "@/lib/wallpapers";
 
 const SECTIONS = [
   { id: "wallpaper", label: "Wallpaper", Icon: Image },
   { id: "display", label: "Display", Icon: Monitor },
-  { id: "sound", label: "Sound", Icon: Volume2 },
   { id: "desktop-dock", label: "Desktop & Dock", Icon: Layout },
   { id: "about", label: "About", Icon: Info },
 ];
 
 export default function SettingsApp({
   onSelectWallpaper, onUploadWallpaper, currentWallpaperId, isCustomWallpaper,
-  brightness, onBrightnessChange, volume, onVolumeChange,
-  autoIconSwitch, onAutoIconSwitchChange, dockAutoHide, onDockAutoHideChange, onReset,
+  brightness, onBrightnessChange, dockAutoHide, onDockAutoHideChange, onReset,
 }) {
   const [section, setSection] = useState("wallpaper");
   const [uploading, setUploading] = useState(false);
@@ -126,31 +124,6 @@ export default function SettingsApp({
                   <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all ${isDark ? "left-[22px]" : "left-0.5"}`} />
                 </button>
               </div>
-            </div>
-            <div className="rounded-xl px-4 py-3" style={{ background: cardBg }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-medium">Auto Icon Theme</div>
-                  <div className={`text-xs ${t.textSubtle}`}>{autoIconSwitch ? "Icons follow dark mode" : "Manual icon theme"}</div>
-                </div>
-                <button onClick={() => onAutoIconSwitchChange(!autoIconSwitch)} className={`relative w-12 h-7 rounded-full transition-colors ${autoIconSwitch ? "bg-green-500" : "bg-black/15"}`}>
-                  <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all ${autoIconSwitch ? "left-[22px]" : "left-0.5"}`} />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {section === "sound" && (
-          <div className="p-6 space-y-6">
-            <h2 className="text-base font-semibold mb-4">Sound</h2>
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Volume2 className="w-4 h-4 text-blue-400" />
-                <span className={`text-sm font-medium ${t.textMuted}`}>Volume</span>
-                <span className={`ml-auto text-sm ${t.textSubtle}`}>{volume}%</span>
-              </div>
-              <input type="range" min={0} max={100} value={volume} onChange={(e) => onVolumeChange(Number(e.target.value))} className="w-full accent-blue-400 cursor-pointer" />
             </div>
           </div>
         )}

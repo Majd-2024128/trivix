@@ -132,6 +132,8 @@ function TimerTab({ isDark }) {
   const [totalSec, setTotalSec] = useState(300);
   const [remaining, setRemaining] = useState(300);
   const [running, setRunning] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("5:00");
   const intervalRef = useRef(null);
 
   useEffect(() => {
@@ -144,6 +146,14 @@ function TimerTab({ isDark }) {
   }, [running, remaining]);
 
   const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+  const commitEdit = () => {
+    const match = draft.match(/^(\d+)(?::(\d{1,2}))?$/);
+    if (match) {
+      const next = Math.min(24 * 3600, Math.max(1, Number(match[1]) * 60 + Number(match[2] || 0)));
+      setTotalSec(next); setRemaining(next); setDraft(`${Math.floor(next / 60)}:${String(next % 60).padStart(2, "0")}`);
+    }
+    setEditing(false);
+  };
   const adjustTime = (delta) => { if (!running) { const next = Math.max(0, Math.min(3600, totalSec + delta)); setTotalSec(next); setRemaining(next); } };
   const reset = () => { setRunning(false); setRemaining(totalSec); };
   const chipBg = isDark ? "bg-white/5 hover:bg-white/10 text-white/50" : "bg-black/5 hover:bg-black/10 text-black/60";
@@ -151,7 +161,12 @@ function TimerTab({ isDark }) {
 
   return (
     <div className="flex flex-col items-center justify-center flex-1 p-6">
-      <div className="text-6xl font-light tracking-wider mb-2 tabular-nums">{fmt(remaining)}</div>
+      {editing ? (
+        <input autoFocus value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={commitEdit} onKeyDown={(e) => e.key === "Enter" && commitEdit()}
+          className={`w-52 bg-transparent text-6xl font-light tracking-wider mb-2 tabular-nums text-center outline-none border-b ${isDark ? "border-white/25" : "border-black/25"}`} />
+      ) : (
+        <button onClick={() => !running && setEditing(true)} className="text-6xl font-light tracking-wider mb-2 tabular-nums">{fmt(remaining)}</button>
+      )}
       {!running && (
         <div className="flex gap-3 mb-6">
           {[{label:"-1m",delta:-60},{label:"-10s",delta:-10},{label:"+10s",delta:10},{label:"+1m",delta:60}].map(({label,delta}) => (
@@ -173,10 +188,7 @@ function TimerTab({ isDark }) {
 }
 
 function AlarmTab({ isDark }) {
-  const [alarms, setAlarms] = useState([
-    { id: 1, time: "07:00", label: "Wake Up", enabled: true },
-    { id: 2, time: "08:30", label: "Meeting", enabled: false },
-  ]);
+  const [alarms, setAlarms] = useState([]);
   const toggle = (id) => setAlarms(alarms.map((a) => a.id === id ? { ...a, enabled: !a.enabled } : a));
   const remove = (id) => setAlarms(alarms.filter((a) => a.id !== id));
   const addAlarm = () => setAlarms([...alarms, { id: Date.now(), time: "12:00", label: "Alarm", enabled: true }]);
