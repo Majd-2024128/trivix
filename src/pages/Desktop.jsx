@@ -66,8 +66,6 @@ export default function Desktop() {
   const [wallpaperId, setWallpaperId] = usePersistedState("trivix_wallpaper", DEFAULT_WALLPAPER_ID);
   const [customWallpaper, setCustomWallpaper] = usePersistedState("trivix_custom_wp", null);
   const [brightness, setBrightness] = usePersistedState("trivix_brightness", 100);
-  const [volume, setVolume] = usePersistedState("trivix_volume", 50);
-  const [autoIconSwitch, setAutoIconSwitch] = usePersistedState("trivix_auto_icon", true);
   const [dockAutoHide, setDockAutoHide] = usePersistedState("trivix_dock_autohide", false);
   const [hiddenApps, setHiddenApps] = usePersistedState("trivix_hidden_apps", []);
 
@@ -312,8 +310,7 @@ export default function Desktop() {
             {w.app.isSettings ? (
               <SettingsApp onSelectWallpaper={handleSelectWallpaper} onUploadWallpaper={handleUploadWallpaper}
                 currentWallpaperId={wallpaperId} isCustomWallpaper={!!customWallpaper}
-                brightness={brightness} onBrightnessChange={setBrightness} volume={volume} onVolumeChange={setVolume}
-                autoIconSwitch={autoIconSwitch} onAutoIconSwitchChange={setAutoIconSwitch}
+                brightness={brightness} onBrightnessChange={setBrightness}
                 dockAutoHide={dockAutoHide} onDockAutoHideChange={setDockAutoHide} onReset={handleReset} />
             ) : AppComponent ? <AppComponent /> : null}
           </DesktopWindow>
