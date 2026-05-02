@@ -179,7 +179,7 @@ export default function QuestApp({ onRequestClose, onDragStart }) {
             <iframe ref={(el) => { if (el) iframeRefs.current[tb.id] = el; }}
               src={tb.url} onLoad={() => updateTab(tb.id, { loading: false, title: extractTitle(tb.url) })}
               className="w-full h-full border-0" style={{ zoom: 0.85 }}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
               title={`Quest tab ${tb.id}`} />
           </div>
         ))}
