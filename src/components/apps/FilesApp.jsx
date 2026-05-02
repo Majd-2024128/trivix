@@ -1,19 +1,28 @@
-import { useState, useCallback } from "react";
-import { Folder, File, ArrowLeft, Home, Plus, Trash2, Download, Upload } from "lucide-react";
+import { useState, useCallback, useRef } from "react";
+import { Folder, File, ArrowLeft, Home, Plus, Trash2, Download, Upload, Rocket } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
+import { APP_DEFS } from "@/components/desktop/Dock";
 
 const DEFAULT_FS = {
   Desktop: {},
   Documents: {},
   Downloads: {},
   Pictures: {},
+  Applications: Object.fromEntries(APP_DEFS.map((app) => [`${app.name}.app`, { __file: true, kind: "app", appId: app.id, name: app.name }]))
 };
 
-export default function FilesApp() {
+const isFile = (entry) => !!entry?.__file;
+const isDir = (entry) => entry && typeof entry === "object" && !entry.__file;
+
+export default function FilesApp({ onOpenApp }) {
   const { isDark } = useTheme();
   const t = themed(isDark);
+  const fileInputRef = useRef(null);
   const [fs, setFs] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("trivix_fs")) || DEFAULT_FS; } catch { return DEFAULT_FS; }
+    try {
+      const saved = JSON.parse(localStorage.getItem("trivix_fs")) || {};
+      return { ...DEFAULT_FS, ...saved, Applications: DEFAULT_FS.Applications };
+    } catch { return DEFAULT_FS; }
   });
   const [path, setPath] = useState([]);
   const [newFolderName, setNewFolderName] = useState("");
@@ -29,15 +38,20 @@ export default function FilesApp() {
 
   const current = getCurrent();
   const entries = Object.keys(current).sort((a, b) => {
-    const aIsDir = typeof current[a] === "object";
-    const bIsDir = typeof current[b] === "object";
+    const aIsDir = isDir(current[a]);
+    const bIsDir = isDir(current[b]);
     if (aIsDir && !bIsDir) return -1;
     if (!aIsDir && bIsDir) return 1;
     return a.localeCompare(b);
   });
 
   const navigate = (name) => {
-    if (typeof current[name] === "object") setPath([...path, name]);
+    const entry = current[name];
+    if (isDir(entry)) setPath([...path, name]);
+    if (entry?.kind === "app") {
+      const app = APP_DEFS.find((a) => a.id === entry.appId);
+      if (app && onOpenApp) onOpenApp(app);
+    }
   };
   const goBack = () => setPath(path.slice(0, -1));
   const goHome = () => setPath([]);
@@ -54,12 +68,35 @@ export default function FilesApp() {
   };
 
   const deleteEntry = (name) => {
+    if (current[name]?.kind === "app") return;
     const newFs = JSON.parse(JSON.stringify(fs));
     let node = newFs;
     for (const p of path) node = node[p];
     delete node[name];
     save(newFs);
   };
+
+  const addFiles = (fileList) => {
+    const files = Array.from(fileList || []);
+    if (files.length === 0) return;
+    const newFs = JSON.parse(JSON.stringify(fs));
+    let node = newFs;
+    for (const p of path) node = node[p];
+    files.forEach((file) => {
+      let name = file.name;
+      let i = 1;
+      while (node[name]) {
+        const dot = file.name.lastIndexOf(".");
+        name = dot > 0 ? `${file.name.slice(0, dot)} ${i}${file.name.slice(dot)}` : `${file.name} ${i}`;
+        i += 1;
+      }
+      node[name] = { __file: true, kind: "upload", name, type: file.type || "application/octet-stream", size: file.size, addedAt: Date.now() };
+    });
+    save(newFs);
+  };
+
+  const handleDrop = (e) => { e.preventDefault(); e.stopPropagation(); addFiles(e.dataTransfer.files); };
+  const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); };
 
   return (
     <div className={`flex flex-col h-full ${isDark ? "bg-[#1c1c1e] text-white" : "bg-white text-[#1c1c1e]"} font-space`}>
