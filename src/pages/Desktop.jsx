@@ -335,7 +335,7 @@ export default function Desktop() {
       )}
 
       {showPicker && <div data-widget-picker-dialog><WidgetPicker onAddWidget={addWidget} onClose={() => setShowPicker(false)} /></div>}
-      {showQuestBar && <QuestBar onOpenApp={openApp} onClose={() => setShowQuestBar(false)} />}
+      {showQuestBar && <QuestBar onOpenApp={openApp} onClose={() => setShowQuestBar(false)} hiddenApps={hiddenApps} onAddToDock={toggleHideApp} />}
       {showDatePopup && <DateTimePopup onClose={() => setShowDatePopup(false)} />}
     </div>
   );
