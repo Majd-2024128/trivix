@@ -62,7 +62,7 @@ export default function WeatherApp() {
 
   const bgClass = isDark
     ? "bg-gradient-to-b from-[#0c4a6e] to-[#075985]"
-    : "bg-gradient-to-b from-[#7dd3fc] to-[#38bdf8]";
+    : "bg-gradient-to-b from-[#0099C9] to-[#38bdf8]";
 
   if (loading) {
     return <div className={`flex items-center justify-center h-full ${bgClass}`}><Loader2 className="w-8 h-8 text-white/70 animate-spin" /></div>;
