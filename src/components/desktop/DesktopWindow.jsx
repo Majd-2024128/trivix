@@ -17,6 +17,17 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
   const controlsRef = useRef(null);
 
   const isQuest = app.id === "quest";
+  const barColors = {
+    calculator: isDark ? "rgba(35,35,37,0.94)" : "rgba(250,250,252,0.96)",
+    clock: isDark ? "rgba(28,28,46,0.94)" : "rgba(245,245,247,0.96)",
+    weather: isDark ? "rgba(12,74,110,0.9)" : "rgba(0,153,201,0.9)",
+    notes: isDark ? "rgba(28,28,30,0.94)" : "rgba(245,245,247,0.96)",
+    calendar: isDark ? "rgba(28,28,30,0.94)" : "rgba(245,245,247,0.96)",
+    chess: isDark ? "rgba(20,20,22,0.94)" : "rgba(248,248,248,0.96)",
+    files: isDark ? "rgba(28,28,30,0.94)" : "rgba(255,255,255,0.96)",
+    editors: isDark ? "rgba(18,18,20,0.96)" : "rgba(246,247,249,0.96)",
+    settings: isDark ? "rgba(28,28,30,0.94)" : "rgba(255,255,255,0.96)",
+  };
 
   const toggleMaximize = useCallback(() => {
     setIsMaximized((prev) => {
@@ -100,7 +111,7 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
       {!isQuest && (
         <div
           className="h-7 shrink-0 select-none flex items-center justify-center"
-          style={{ cursor: isMaximized ? "default" : "grab", background: isDark ? "rgba(30, 30, 30, 0.85)" : "rgba(245, 245, 247, 0.9)", backdropFilter: "blur(12px)", borderBottom: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)" }}
+          style={{ cursor: isMaximized ? "default" : "grab", background: barColors[app.id] || (isDark ? "rgba(30, 30, 30, 0.85)" : "rgba(245, 245, 247, 0.9)"), backdropFilter: "blur(12px)", borderBottom: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.12)" }}
           onMouseDown={handleMouseDownDrag}
           onDoubleClick={toggleMaximize}
         >
