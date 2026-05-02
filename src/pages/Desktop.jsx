@@ -20,7 +20,7 @@ import QuestBar from "../components/desktop/QuestBar";
 import DateTimePopup from "../components/desktop/DateTimePopup";
 import MobileGate from "../components/MobileGate";
 import { useTheme } from "@/lib/ThemeContext";
-import { WALLPAPERS, gradientForTheme, DEFAULT_WALLPAPER_ID, getWallpaperById } from "@/lib/wallpapers";
+import { gradientForTheme, DEFAULT_WALLPAPER_ID, getWallpaperById, normalizeWallpaperUrl } from "@/lib/wallpapers";
 import { getWidgetDef, GRID } from "@/lib/widgetDefs";
 
 const APP_COMPONENTS = {
@@ -80,6 +80,11 @@ export default function Desktop() {
   const [showDatePopup, setShowDatePopup] = useState(false);
   const [allMinimized, setAllMinimized] = useState(false);
 
+  useEffect(() => {
+    const stored = localStorage.getItem("trivix_wallpaper");
+    if (!stored || stored === '"green"') setWallpaperId(DEFAULT_WALLPAPER_ID);
+  }, [setWallpaperId]);
+
   // Disable browser context menu globally
   useEffect(() => {
     const handler = (e) => e.preventDefault();
@@ -95,10 +100,15 @@ export default function Desktop() {
     return () => style.remove();
   }, []);
 
-  // Alt+D minimize/restore, Alt+Space quest bar
+  // Alt/Option shortcuts: D minimize/restore, Space quest bar, C close, S switch.
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if ((e.altKey || e.metaKey) && (e.key === "d" || e.key === "D")) {
+      const shortcutKey = e.altKey || e.metaKey || e.getModifierState?.("AltGraph");
+      if (!shortcutKey) return;
+      if (e.code === "Space" || e.key === " ") {
+        e.preventDefault();
+        setShowQuestBar((v) => !v);
+      } else if (e.key.toLowerCase() === "d") {
         e.preventDefault();
         if (allMinimized) {
           setMinimizedApps(new Set());
@@ -108,13 +118,10 @@ export default function Desktop() {
           setAllMinimized(true);
           setFocusedControls(null);
         }
-      } else if ((e.altKey || e.metaKey) && e.key === " ") {
-        e.preventDefault();
-        setShowQuestBar((v) => !v);
-      } else if (e.altKey && (e.key === "c" || e.key === "C")) {
+      } else if (e.key.toLowerCase() === "c") {
         e.preventDefault();
         if (focusedControls?.close) focusedControls.close();
-      } else if (e.altKey && (e.key === "s" || e.key === "S")) {
+      } else if (e.key.toLowerCase() === "s") {
         e.preventDefault();
         cycleApps();
       }
@@ -124,7 +131,7 @@ export default function Desktop() {
   }, [focusedControls, windows, allMinimized]);
 
   const handleSelectWallpaper = useCallback((id) => { setWallpaperId(id); setCustomWallpaper(null); }, []);
-  const handleUploadWallpaper = useCallback((urlString) => { setCustomWallpaper(urlString); }, []);
+  const handleUploadWallpaper = useCallback((urlString) => { setCustomWallpaper(normalizeWallpaperUrl(urlString)); }, []);
 
   const openApp = useCallback((app) => {
     if (minimizedApps.has(app.id)) {
@@ -253,6 +260,7 @@ export default function Desktop() {
   }, [showPicker]);
 
   const handleReset = () => {
+    if (!window.confirm("Are you sure you want to reset Trivix? This will clear your settings and files.")) return;
     localStorage.clear();
     window.location.reload();
   };
@@ -264,7 +272,7 @@ export default function Desktop() {
   const openAppIds = windows.map((w) => w.app.id);
   const isSettingsOpen = openAppIds.includes("settings");
 
-  const wallpaperResolved = customWallpaper || gradientForTheme(getWallpaperById(wallpaperId), isDark);
+  const wallpaperResolved = normalizeWallpaperUrl(customWallpaper) || gradientForTheme(getWallpaperById(wallpaperId), isDark);
   const wp = getWallpaperById(wallpaperId);
   const isImageWallpaper = wallpaperResolved.startsWith("url(") || wp?.isImage;
 
@@ -279,7 +287,7 @@ export default function Desktop() {
         background: isImageWallpaper ? undefined : wallpaperResolved,
         backgroundColor: isImageWallpaper ? "#0a0a0c" : undefined,
         backgroundImage: isImageWallpaper ? wallpaperResolved : undefined,
-        backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center center",
+        backgroundSize: "cover", backgroundRepeat: "no-repeat", backgroundPosition: "center center", backgroundAttachment: "fixed",
         filter: `brightness(${brightness / 100})`,
       }}
     >
