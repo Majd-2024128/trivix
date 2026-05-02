@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { Folder, File, ArrowLeft, Home, Plus, Trash2, Download, Upload, Rocket } from "lucide-react";
+import { Folder, File, ArrowLeft, Home, Plus, Trash2, Upload, Rocket } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 import { APP_DEFS } from "@/components/desktop/Dock";
 
@@ -11,7 +11,6 @@ const DEFAULT_FS = {
   Applications: Object.fromEntries(APP_DEFS.map((app) => [`${app.name}.app`, { __file: true, kind: "app", appId: app.id, name: app.name }]))
 };
 
-const isFile = (entry) => !!entry?.__file;
 const isDir = (entry) => entry && typeof entry === "object" && !entry.__file;
 
 export default function FilesApp({ onOpenApp }) {
