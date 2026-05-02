@@ -104,7 +104,9 @@ export default function FilesApp({ onOpenApp }) {
         <button onClick={goBack} disabled={path.length === 0} className={`p-1.5 rounded-lg ${t.hover} disabled:opacity-30`}><ArrowLeft className="w-4 h-4" /></button>
         <button onClick={goHome} className={`p-1.5 rounded-lg ${t.hover}`}><Home className="w-4 h-4" /></button>
         <div className={`flex-1 text-sm ${t.textMuted} truncate`}>/{path.join("/")}</div>
+        <button onClick={() => fileInputRef.current?.click()} className={`p-1.5 rounded-lg ${t.hover}`}><Upload className="w-4 h-4" /></button>
         <button onClick={() => setShowNew(!showNew)} className={`p-1.5 rounded-lg ${t.hover}`}><Plus className="w-4 h-4" /></button>
+        <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
       </div>
 
       {showNew && (
@@ -121,13 +123,17 @@ export default function FilesApp({ onOpenApp }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto p-3" onDrop={handleDrop} onDragOver={handleDragOver}>
         {entries.length === 0 ? (
-          <div className={`flex flex-col items-center justify-center h-full ${t.textSubtle} text-sm`}>Empty folder</div>
+          <div className={`flex flex-col items-center justify-center h-full ${t.textSubtle} text-sm gap-2`}>
+            <Upload className="w-8 h-8 opacity-40" />
+            <span>Drop files here</span>
+          </div>
         ) : (
           <div className="grid grid-cols-4 gap-3">
             {entries.map((name) => {
-              const isDir = typeof current[name] === "object";
+              const entry = current[name];
+              const directory = isDir(entry);
               return (
                 <div
                   key={name}
@@ -135,18 +141,22 @@ export default function FilesApp({ onOpenApp }) {
                   onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer transition-colors ${t.hover} group`}
                 >
-                  {isDir ? (
+                  {directory ? (
                     <Folder className="w-10 h-10 text-blue-400" />
+                  ) : entry?.kind === "app" ? (
+                    <Rocket className="w-10 h-10 text-cyan-400" />
                   ) : (
                     <File className={`w-10 h-10 ${t.textMuted}`} />
                   )}
                   <span className="text-xs text-center truncate w-full">{name}</span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); deleteEntry(name); }}
-                    className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="w-3 h-3 text-red-400" />
-                  </button>
+                  {entry?.kind !== "app" && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteEntry(name); }}
+                      className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="w-3 h-3 text-red-400" />
+                    </button>
+                  )}
                 </div>
               );
             })}
