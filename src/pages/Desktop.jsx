@@ -312,7 +312,7 @@ export default function Desktop() {
                 currentWallpaperId={wallpaperId} isCustomWallpaper={!!customWallpaper}
                 brightness={brightness} onBrightnessChange={setBrightness}
                 dockAutoHide={dockAutoHide} onDockAutoHideChange={setDockAutoHide} onReset={handleReset} />
-            ) : AppComponent ? <AppComponent /> : null}
+            ) : AppComponent ? <AppComponent onOpenApp={openApp} /> : null}
           </DesktopWindow>
         );
       })}
