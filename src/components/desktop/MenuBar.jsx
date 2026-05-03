@@ -1,7 +1,7 @@
 import { X, ArrowDown, Maximize2 } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
 
-export default function MenuBar({ controls }) {
+export default function MenuBar({ controls, activities = [] }) {
   const { isDark } = useTheme();
   const displayName = controls?.appName === "Settings" ? "System" : controls?.appName;
   const labelColor = isDark ? "text-white/60" : "text-black/70";
@@ -27,7 +27,7 @@ export default function MenuBar({ controls }) {
             <button onClick={controls.minimize} className="flex items-center justify-center hover:opacity-70 transition-opacity">
               <ArrowDown className={`w-3 h-3 ${isDark ? "text-white" : "text-black/80"}`} strokeWidth={2.5} />
             </button>
-            <button onClick={controls.maximize} className="flex items-center justify-center hover:opacity-70 transition-opacity">
+            <button onClick={(e) => controls.maximize?.(e)} className="flex items-center justify-center hover:opacity-70 transition-opacity">
               <Maximize2 className={`w-3 h-3 ${isDark ? "text-green-400" : "text-green-600"}`} strokeWidth={2.5} />
             </button>
             {displayName && (
@@ -48,6 +48,15 @@ export default function MenuBar({ controls }) {
           </>
         )}
       </div>
+      {activities.length > 0 && (
+        <div className="ml-auto flex items-center gap-1.5">
+          {activities.slice(0, 3).map((activity) => (
+            <div key={activity.id} className={`rounded-full px-2.5 py-1 text-[11px] font-medium tabular-nums ${isDark ? "bg-white/10 text-white/80" : "bg-black/10 text-black/75"}`}>
+              {activity.label} {activity.value}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
