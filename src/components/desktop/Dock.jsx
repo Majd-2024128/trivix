@@ -21,6 +21,8 @@ import filesIconDark from "@/assets/files-icon-dark.png";
 import filesIconLight from "@/assets/files-icon-light.png";
 import editorsIconDark from "@/assets/editors-icon-dark.png";
 import editorsIconLight from "@/assets/editors-icon-light.png";
+import tipsIconDark from "@/assets/tips-icon-dark.png";
+import tipsIconLight from "@/assets/tips-icon-light.png";
 
 export const APP_DEFS = [
   { id: "weather", name: "Weather", iconDark: weatherIconDark, iconLight: weatherIconLight },
@@ -32,13 +34,14 @@ export const APP_DEFS = [
   { id: "chess", name: "Chess", iconDark: chessIconDark, iconLight: chessIconLight },
   { id: "files", name: "Files", iconDark: filesIconDark, iconLight: filesIconLight },
   { id: "editors", name: "Editors", iconDark: editorsIconDark, iconLight: editorsIconLight },
+  { id: "tips", name: "Tips", iconDark: tipsIconDark, iconLight: tipsIconLight },
 ];
 
 export const APPS = APP_DEFS.map((a) => ({ id: a.id, name: a.name, icon: a.iconDark }));
 
 const DEFAULT_ORDER = APP_DEFS.map((a) => a.id);
 
-export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hiddenApps = [], onToggleHideApp }) {
+export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hiddenApps = [], onToggleHideApp, onDropAppToDesktop, dockHidden = false }) {
   const { isDark } = useTheme();
   const [order, setOrder] = useState(() => {
     try { const s = localStorage.getItem("trivix_dock_order"); return s ? JSON.parse(s) : DEFAULT_ORDER; } catch { return DEFAULT_ORDER; }
@@ -53,6 +56,12 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
 
   useEffect(() => { localStorage.setItem("trivix_dock_order", JSON.stringify(order)); }, [order]);
 
+  useEffect(() => {
+    const move = (e) => { window.__trivixDockPointer = { x: e.clientX, y: e.clientY }; };
+    window.addEventListener("mousemove", move);
+    return () => window.removeEventListener("mousemove", move);
+  }, []);
+
   const visibleOrder = order.filter((id) => !hiddenApps.includes(id));
 
   const apps = visibleOrder
@@ -61,13 +70,21 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
     .map((a) => ({ id: a.id, name: a.name, iconDark: a.iconDark, iconLight: a.iconLight, icon: isDark ? a.iconDark : a.iconLight, useDark: isDark }));
 
   const handleDragEnd = (result) => {
-    if (!result.destination) return;
+    if (!result.destination) {
+      const p = window.__trivixDockPointer;
+      if (p && p.y < window.innerHeight - 120) onDropAppToDesktop?.(result.draggableId, p);
+      return;
+    }
     const visIds = visibleOrder.slice();
     const [removed] = visIds.splice(result.source.index, 1);
     visIds.splice(result.destination.index, 0, removed);
     // Rebuild full order preserving hidden apps in their relative positions
     const newOrder = [...visIds, ...order.filter((id) => hiddenApps.includes(id))];
     setOrder(newOrder);
+  };
+
+  const handleDragStart = (start) => {
+    window.__trivixDraggingDockApp = start.draggableId;
   };
 
   const containerCls = isDark
@@ -78,7 +95,7 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
 
   return (
     <div
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-[130]"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{ paddingBottom: 12, paddingTop: autoHide ? 20 : 0 }}
@@ -86,11 +103,11 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
       <div
         style={{
           transition: "transform 0.3s cubic-bezier(0.22,1,0.36,1), opacity 0.3s",
-          transform: show ? "translateY(0)" : "translateY(calc(100% + 20px))",
-          opacity: show ? 1 : 0,
+          transform: show && !dockHidden ? "translateY(0)" : "translateY(calc(100% + 20px))",
+          opacity: show && !dockHidden ? 1 : 0,
         }}
       >
-        <DragDropContext onDragEnd={handleDragEnd}>
+        <DragDropContext onDragStart={handleDragStart} onDragEnd={(result) => { window.__trivixDraggingDockApp = null; handleDragEnd(result); }}>
           <Droppable droppableId="dock" direction="horizontal">
             {(provided) => (
               <div

@@ -103,7 +103,7 @@ export default function CalculatorApp() {
           eq: opStyleLight,
         };
     return (
-      <button type="button" onClick={onClick} className={`${base} ${styles[variant]}`} style={{ gridColumn: span > 1 ? `span ${span}` : undefined }}>
+      <button type="button" onMouseDown={(e) => e.stopPropagation()} onClick={onClick} className={`${base} ${styles[variant]}`} style={{ gridColumn: span > 1 ? `span ${span}` : undefined }}>
         {children}
       </button>
     );

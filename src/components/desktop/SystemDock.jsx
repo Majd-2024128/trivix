@@ -4,7 +4,7 @@ import systemIcon from "@/assets/system-icon.png";
 import systemIconLight from "@/assets/system-icon-light.png";
 import { useTheme } from "@/lib/ThemeContext";
 
-export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSettings }) {
+export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSettings, onLock, dockHidden = false }) {
   const { isDark } = useTheme();
   const [hovered, setHovered] = useState(false);
   const [contextMenu, setContextMenu] = useState(false);
@@ -66,6 +66,13 @@ export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSett
                     Open
                   </button>
                 )}
+                <div className="h-px bg-white/10" />
+                <button
+                  onClick={() => { setContextMenu(false); onLock?.(); }}
+                  className="w-full px-3 py-2 text-left text-sm text-white/80 hover:bg-white/10 font-space transition-colors"
+                >
+                  Lock
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -87,6 +94,7 @@ export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSett
             onClick={onOpenSettings}
             onContextMenu={handleContextMenu}
             className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-card shadow-lg ring-1 ring-white/10 transition-transform active:scale-95"
+            style={{ transform: dockHidden ? "translateY(120px)" : "translateY(0)", opacity: dockHidden ? 0 : 1, transition: "transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.25s" }}
           >
             <div className="relative h-full w-full">
               <img src={systemIcon} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover pointer-events-none" draggable={false} style={{ opacity: isDark ? 1 : 0 }} />

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Upload, Play, Pause, Download, Trash2, Type, Square, Circle, Scissors, Image as ImageIcon, Film } from "lucide-react";
+import { Upload, Play, Pause, Download, Trash2, Type, Square, Circle, Scissors, Image as ImageIcon, Film, Star } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 
 const uid = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -8,14 +8,16 @@ const defaultOverlay = (type) => ({
   id: uid(),
   type,
   text: type === "text" ? "Title" : "",
-  shape: type === "circle" ? "circle" : "rect",
+  shape: type,
   x: 50,
   y: 42,
-  w: type === "text" ? 180 : 120,
-  h: type === "text" ? 44 : 80,
+  w: type === "text" ? 180 : type === "rectangle" ? 160 : 120,
+  h: type === "text" ? 44 : type === "rectangle" ? 80 : 120,
   color: type === "text" ? "#ffffff" : "#0099C9",
   background: type === "text" ? "rgba(0,0,0,0.35)" : "rgba(0,153,201,0.55)",
 });
+
+const SHAPES = ["circle", "square", "triangle", "rectangle", "star", "diamond", "moon"];
 
 export default function EditorsApp() {
   const { isDark } = useTheme();
@@ -25,6 +27,7 @@ export default function EditorsApp() {
   const [selectedOverlay, setSelectedOverlay] = useState(null);
   const [playing, setPlaying] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [showShapes, setShowShapes] = useState(false);
   const videoRef = useRef(null);
   const imageRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -125,8 +128,10 @@ export default function EditorsApp() {
       <div className={`flex items-center gap-2 px-3 border-b ${t.border} ${isDark ? "bg-[#18181b]" : "bg-[#f7f8fa]"}`}>
         <button onClick={() => fileInputRef.current?.click()} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs ${button}`}><Upload className="w-3.5 h-3.5" /> Import</button>
         <button onClick={() => addOverlay("text")} disabled={!clip} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs disabled:opacity-40 ${button}`}><Type className="w-3.5 h-3.5" /> Text</button>
-        <button onClick={() => addOverlay("shape")} disabled={!clip} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs disabled:opacity-40 ${button}`}><Square className="w-3.5 h-3.5" /> Shape</button>
-        <button onClick={() => addOverlay("circle")} disabled={!clip} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs disabled:opacity-40 ${button}`}><Circle className="w-3.5 h-3.5" /> Circle</button>
+        <div className="relative">
+          <button onClick={() => setShowShapes((v) => !v)} disabled={!clip} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs disabled:opacity-40 ${button}`}><Square className="w-3.5 h-3.5" /> Shapes</button>
+          {showShapes && <div className={`absolute top-full mt-2 z-20 w-36 overflow-hidden rounded-lg border ${t.border} ${isDark ? "bg-[#202024]" : "bg-white"}`}>{SHAPES.map((shape) => <button key={shape} onClick={() => { addOverlay(shape); setShowShapes(false); }} className={`block w-full px-3 py-2 text-left text-xs capitalize ${button}`}>{shape}</button>)}</div>}
+        </div>
         <div className="flex-1" />
         <button onClick={exportPoster} disabled={!clip || exporting} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs bg-[#0099C9] hover:bg-[#0088b4] text-white disabled:opacity-40"><Download className="w-3.5 h-3.5" /> {exporting ? "Exporting" : "Export Poster"}</button>
         <input ref={fileInputRef} type="file" accept="video/*,image/*" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
@@ -148,7 +153,7 @@ export default function EditorsApp() {
           {clip?.type === "image" && <img ref={imageRef} src={clip.url} alt="Preview" className="max-w-full max-h-full object-contain" />}
           {!clip && <div className="text-white/40 text-sm">Import media to start editing</div>}
           <div className="absolute inset-0 pointer-events-none">
-            {overlays.map((o) => <button key={o.id} onClick={() => setSelectedOverlay(o.id)} className="absolute pointer-events-auto border border-white/30" style={{ left: `${o.x}%`, top: `${o.y}%`, width: o.w, height: o.h, color: o.color, background: o.background, borderRadius: o.type === "circle" ? "999px" : 6 }}>
+            {overlays.map((o) => <button key={o.id} onClick={() => setSelectedOverlay(o.id)} className="absolute pointer-events-auto border border-white/30" style={{ left: `${o.x}%`, top: `${o.y}%`, width: o.w, height: o.h, color: o.color, background: o.background, borderRadius: o.type === "circle" ? "999px" : o.type === "moon" ? "999px" : 6, clipPath: o.type === "triangle" ? "polygon(50% 0, 0 100%, 100% 100%)" : o.type === "diamond" ? "polygon(50% 0, 100% 50%, 50% 100%, 0 50%)" : o.type === "star" ? "polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)" : undefined, boxShadow: o.type === "moon" ? "inset 28px 0 0 rgba(0,0,0,0.45)" : undefined }}>
               {o.type === "text" ? o.text : null}
             </button>)}
           </div>
@@ -164,7 +169,10 @@ export default function EditorsApp() {
               {overlay.type === "text" && <input value={overlay.text} onChange={(e) => updateOverlay({ text: e.target.value })} className={`w-full rounded px-2 py-1 text-xs outline-none ${isDark ? "bg-white/10" : "bg-black/5"}`} />}
               <label className="block text-xs"><span className={t.textMuted}>X</span><input type="range" min="0" max="90" value={overlay.x} onChange={(e) => updateOverlay({ x: Number(e.target.value) })} className="w-full accent-[#0099C9]" /></label>
               <label className="block text-xs"><span className={t.textMuted}>Y</span><input type="range" min="0" max="85" value={overlay.y} onChange={(e) => updateOverlay({ y: Number(e.target.value) })} className="w-full accent-[#0099C9]" /></label>
+              <label className="block text-xs"><span className={t.textMuted}>Width</span><input type="range" min="40" max="360" value={overlay.w} onChange={(e) => updateOverlay({ w: Number(e.target.value) })} className="w-full accent-[#0099C9]" /></label>
+              <label className="block text-xs"><span className={t.textMuted}>Height</span><input type="range" min="40" max="240" value={overlay.h} onChange={(e) => updateOverlay({ h: Number(e.target.value) })} className="w-full accent-[#0099C9]" /></label>
               <input type="color" value={overlay.type === "text" ? overlay.color : "#0099C9"} onChange={(e) => updateOverlay(overlay.type === "text" ? { color: e.target.value } : { background: `${e.target.value}88` })} />
+              <button onClick={() => { updateClip(clip.id, { overlays: clip.overlays.filter((o) => o.id !== overlay.id) }); setSelectedOverlay(null); }} className="block text-xs text-red-400 hover:text-red-300">Remove overlay</button>
             </div>}
           </div>}
         </div>

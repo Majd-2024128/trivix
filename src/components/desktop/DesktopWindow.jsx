@@ -4,7 +4,7 @@ import { useTheme } from "@/lib/ThemeContext";
 const MIN_W = 360;
 const MIN_H = 260;
 
-export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPos, isMinimized, onMinimize, children }) {
+export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPos, isMinimized, onMinimize, onFullscreenChange, children }) {
   const { isDark } = useTheme();
   const [pos, setPos] = useState(initialPos || { x: 80, y: 40 });
   const [size, setSize] = useState({ w: 720, h: 500 });
@@ -17,6 +17,7 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
   const controlsRef = useRef(null);
 
   const isQuest = app.id === "quest";
+  const isGlimpse = app.id === "glimpse";
   const barColors = {
     calculator: isDark ? "rgba(35,35,37,0.94)" : "rgba(250,250,252,0.96)",
     clock: isDark ? "rgba(28,28,46,0.94)" : "rgba(245,245,247,0.96)",
@@ -29,13 +30,15 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
     settings: isDark ? "rgba(28,28,30,0.94)" : "rgba(255,255,255,0.96)",
   };
 
-  const toggleMaximize = useCallback(() => {
+  const toggleMaximize = useCallback((event) => {
+    const altFill = !!(event?.altKey || event?.metaKey);
     setIsMaximized((prev) => {
       if (prev) { setPos(prevState.current.pos); setSize(prevState.current.size); }
-      else { prevState.current = { pos, size }; setPos({ x: 0, y: 28 }); setSize({ w: window.innerWidth, h: window.innerHeight - 28 - 80 }); }
+      else { prevState.current = { pos, size }; setPos({ x: 0, y: 28 }); setSize({ w: window.innerWidth, h: window.innerHeight - 28 - (altFill ? 0 : 80) }); }
+      onFullscreenChange?.(!prev && altFill);
       return !prev;
     });
-  }, [pos, size]);
+  }, [pos, size, onFullscreenChange]);
 
   const toggleMinimize = useCallback(() => { if (onMinimize) onMinimize(); }, [onMinimize]);
 
@@ -108,7 +111,7 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
       style={{ left: pos.x, top: pos.y, width: size.w, height: size.h, zIndex, transition: interacting ? "none" : "box-shadow 0.2s", display: isMinimized ? "none" : "flex" }}
       onMouseDown={notifyFocus}
     >
-      {!isQuest && (
+      {!isQuest && !isGlimpse && (
         <div
           className="h-7 shrink-0 select-none flex items-center justify-center"
           style={{ cursor: isMaximized ? "default" : "grab", background: barColors[app.id] || (isDark ? "rgba(30, 30, 30, 0.85)" : "rgba(245, 245, 247, 0.9)"), backdropFilter: "blur(12px)", borderBottom: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.12)" }}
