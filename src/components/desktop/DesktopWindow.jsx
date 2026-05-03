@@ -30,8 +30,8 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
     settings: isDark ? "rgba(28,28,30,0.94)" : "rgba(255,255,255,0.96)",
   };
 
-  const toggleMaximize = useCallback(() => {
-    const altFill = window.event?.altKey || window.event?.metaKey;
+  const toggleMaximize = useCallback((event) => {
+    const altFill = !!(event?.altKey || event?.metaKey);
     setIsMaximized((prev) => {
       if (prev) { setPos(prevState.current.pos); setSize(prevState.current.size); }
       else { prevState.current = { pos, size }; setPos({ x: 0, y: 28 }); setSize({ w: window.innerWidth, h: window.innerHeight - 28 - (altFill ? 0 : 80) }); }
