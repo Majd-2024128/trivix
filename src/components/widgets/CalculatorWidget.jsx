@@ -48,6 +48,8 @@ export default function CalculatorWidget() {
     const styles = { num: numStyle, fn: fnStyle, op: opStyle, eq: opStyle };
     return (
       <button
+        type="button"
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={onClick}
         className={`rounded-lg font-semibold transition-all active:translate-y-[1px] flex items-center justify-center text-sm ${styles[variant]}`}
         style={{ gridColumn: span > 1 ? `span ${span}` : undefined, minHeight: 0 }}
