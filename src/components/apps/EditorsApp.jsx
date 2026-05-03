@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Upload, Play, Pause, Download, Trash2, Type, Square, Circle, Scissors, Image as ImageIcon, Film } from "lucide-react";
+import { Upload, Play, Pause, Download, Trash2, Type, Square, Circle, Scissors, Image as ImageIcon, Film, Star } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 
 const uid = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -8,11 +8,11 @@ const defaultOverlay = (type) => ({
   id: uid(),
   type,
   text: type === "text" ? "Title" : "",
-  shape: type === "circle" ? "circle" : "rect",
+  shape: type,
   x: 50,
   y: 42,
-  w: type === "text" ? 180 : 120,
-  h: type === "text" ? 44 : 80,
+  w: type === "text" ? 180 : type === "rectangle" ? 160 : 120,
+  h: type === "text" ? 44 : type === "rectangle" ? 80 : 120,
   color: type === "text" ? "#ffffff" : "#0099C9",
   background: type === "text" ? "rgba(0,0,0,0.35)" : "rgba(0,153,201,0.55)",
 });
