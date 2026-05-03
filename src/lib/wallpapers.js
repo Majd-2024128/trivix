@@ -1,4 +1,5 @@
 import auroraRealImg from "@/assets/wallpaper-aurora-real.jpg";
+import deepSeaImg from "@/assets/wallpaper-deep-sea.jpg";
 
 const HEX_RE = /#([0-9a-fA-F]{6})\b/g;
 
@@ -60,14 +61,14 @@ const DARK_WALLPAPERS = [
   { id: "violet", label: "Violet Dream", dark: "linear-gradient(145deg, #240046 0%, #5a189a 35%, #9d4edd 70%, #c77dff 100%)" },
   { id: "graphite", label: "Graphite", dark: "linear-gradient(145deg, #212529 0%, #495057 50%, #adb5bd 100%)" },
   { id: "monochrome", label: "Monochrome", dark: "linear-gradient(145deg, #000000 0%, #2d2d2d 50%, #595959 100%)" },
-  { id: "deepsky", label: "Deep Sea", dark: "linear-gradient(145deg, #0077b6 0%, #023e8a 50%, #03045e 100%)" },
+  { id: "deepsky", label: "Deep Sea", dark: `url(${deepSeaImg})`, light: `url(${deepSeaImg})`, isImage: true },
 ];
 
 export const WALLPAPERS = [
-  ...DARK_WALLPAPERS.map((w) => ({ ...w, light: lightenGradient(w.dark) })),
+  ...DARK_WALLPAPERS.map((w) => ({ ...w, light: w.light || lightenGradient(w.dark) })),
   {
     id: "aurora-real",
-    label: "Aurora Real",
+    label: "Iqralandic Flag",
     dark: `url(${auroraRealImg})`,
     light: `url(${auroraRealImg})`,
     isImage: true,
