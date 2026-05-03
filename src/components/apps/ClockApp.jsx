@@ -91,6 +91,11 @@ function StopwatchTab({ isDark }) {
     return () => clearInterval(intervalRef.current);
   }, [running]);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("trivix-activity", { detail: { id: "stopwatch", active: running, label: "Stopwatch", value: fmt(elapsed) } }));
+    return () => window.dispatchEvent(new CustomEvent("trivix-activity", { detail: { id: "stopwatch", active: false } }));
+  }, [running, elapsed]);
+
   const fmt = (ms) => {
     const m = Math.floor(ms / 60000);
     const s = Math.floor((ms % 60000) / 1000);
@@ -143,6 +148,11 @@ function TimerTab({ isDark }) {
       }, 1000);
     } else clearInterval(intervalRef.current);
     return () => clearInterval(intervalRef.current);
+  }, [running, remaining]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("trivix-activity", { detail: { id: "timer", active: running && remaining > 0, label: "Timer", value: fmt(remaining) } }));
+    return () => window.dispatchEvent(new CustomEvent("trivix-activity", { detail: { id: "timer", active: false } }));
   }, [running, remaining]);
 
   const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
