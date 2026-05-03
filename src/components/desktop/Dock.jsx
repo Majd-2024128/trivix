@@ -95,7 +95,7 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
 
   return (
     <div
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-[130]"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{ paddingBottom: 12, paddingTop: autoHide ? 20 : 0 }}
