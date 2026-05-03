@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Sun, Image, Upload, Monitor, Info, Layout, RotateCcw } from "lucide-react";
+import { Sun, Image, Upload, Monitor, Info, Layout, RotateCcw, Lock } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 import { WALLPAPERS, gradientForTheme } from "@/lib/wallpapers";
 
@@ -7,12 +7,14 @@ const SECTIONS = [
   { id: "wallpaper", label: "Wallpaper", Icon: Image },
   { id: "display", label: "Display", Icon: Monitor },
   { id: "desktop-dock", label: "Desktop & Dock", Icon: Layout },
+  { id: "lock", label: "Lock Screen", Icon: Lock },
   { id: "about", label: "About", Icon: Info },
 ];
 
 export default function SettingsApp({
   onSelectWallpaper, onUploadWallpaper, currentWallpaperId, isCustomWallpaper,
   brightness, onBrightnessChange, dockAutoHide, onDockAutoHideChange, onReset,
+  wallpaperFit = "cover", onWallpaperFitChange, lockSettings = {}, onLockSettingsChange,
 }) {
   const [section, setSection] = useState("wallpaper");
   const [uploading, setUploading] = useState(false);
@@ -100,6 +102,17 @@ export default function SettingsApp({
               </button>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
             </div>
+            <div className="rounded-xl px-4 py-3" style={{ background: cardBg }}>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-medium">Wallpaper Fit</div>
+                  <div className={`text-xs ${t.textSubtle}`}>{wallpaperFit === "cover" ? "Fill screen" : "Show full image"}</div>
+                </div>
+                <div className={`flex rounded-lg p-0.5 ${isDark ? "bg-white/10" : "bg-black/10"}`}>
+                  {["cover", "contain"].map((fit) => <button key={fit} onClick={() => onWallpaperFitChange?.(fit)} className={`px-3 py-1.5 text-xs rounded-md capitalize ${wallpaperFit === fit ? isDark ? "bg-white text-black" : "bg-black text-white" : t.textMuted}`}>{fit}</button>)}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -141,6 +154,22 @@ export default function SettingsApp({
                   <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all ${dockAutoHide ? "left-[22px]" : "left-0.5"}`} />
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {section === "lock" && (
+          <div className="p-6 space-y-6">
+            <h2 className="text-base font-semibold mb-4">Lock Screen</h2>
+            <div className="rounded-xl px-4 py-3 space-y-4" style={{ background: cardBg }}>
+              <label className="block text-sm font-medium">Clock Style</label>
+              <div className={`flex rounded-lg p-0.5 ${isDark ? "bg-white/10" : "bg-black/10"}`}>
+                {["bold", "thin", "rounded"].map((style) => <button key={style} onClick={() => onLockSettingsChange?.({ ...lockSettings, style })} className={`flex-1 px-3 py-1.5 text-xs rounded-md capitalize ${lockSettings.style === style ? isDark ? "bg-white text-black" : "bg-black text-white" : t.textMuted}`}>{style}</button>)}
+              </div>
+              <label className="block text-sm font-medium">Clock Size</label>
+              <input type="range" min="64" max="132" value={lockSettings.size || 92} onChange={(e) => onLockSettingsChange?.({ ...lockSettings, size: Number(e.target.value) })} className="w-full accent-cyan-400" />
+              <label className="block text-sm font-medium">Password</label>
+              <input type="password" value={lockSettings.password || ""} onChange={(e) => onLockSettingsChange?.({ ...lockSettings, password: e.target.value })} placeholder="Optional" className={`w-full rounded-lg px-3 py-2 text-sm outline-none ${t.inputBg}`} />
             </div>
           </div>
         )}
