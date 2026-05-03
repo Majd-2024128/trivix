@@ -153,7 +153,7 @@ export default function EditorsApp() {
           {clip?.type === "image" && <img ref={imageRef} src={clip.url} alt="Preview" className="max-w-full max-h-full object-contain" />}
           {!clip && <div className="text-white/40 text-sm">Import media to start editing</div>}
           <div className="absolute inset-0 pointer-events-none">
-            {overlays.map((o) => <button key={o.id} onClick={() => setSelectedOverlay(o.id)} className="absolute pointer-events-auto border border-white/30" style={{ left: `${o.x}%`, top: `${o.y}%`, width: o.w, height: o.h, color: o.color, background: o.background, borderRadius: o.type === "circle" ? "999px" : 6 }}>
+            {overlays.map((o) => <button key={o.id} onClick={() => setSelectedOverlay(o.id)} className="absolute pointer-events-auto border border-white/30" style={{ left: `${o.x}%`, top: `${o.y}%`, width: o.w, height: o.h, color: o.color, background: o.background, borderRadius: o.type === "circle" ? "999px" : o.type === "moon" ? "999px" : 6, clipPath: o.type === "triangle" ? "polygon(50% 0, 0 100%, 100% 100%)" : o.type === "diamond" ? "polygon(50% 0, 100% 50%, 50% 100%, 0 50%)" : o.type === "star" ? "polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)" : undefined, boxShadow: o.type === "moon" ? "inset 28px 0 0 rgba(0,0,0,0.45)" : undefined }}>
               {o.type === "text" ? o.text : null}
             </button>)}
           </div>
@@ -169,7 +169,10 @@ export default function EditorsApp() {
               {overlay.type === "text" && <input value={overlay.text} onChange={(e) => updateOverlay({ text: e.target.value })} className={`w-full rounded px-2 py-1 text-xs outline-none ${isDark ? "bg-white/10" : "bg-black/5"}`} />}
               <label className="block text-xs"><span className={t.textMuted}>X</span><input type="range" min="0" max="90" value={overlay.x} onChange={(e) => updateOverlay({ x: Number(e.target.value) })} className="w-full accent-[#0099C9]" /></label>
               <label className="block text-xs"><span className={t.textMuted}>Y</span><input type="range" min="0" max="85" value={overlay.y} onChange={(e) => updateOverlay({ y: Number(e.target.value) })} className="w-full accent-[#0099C9]" /></label>
+              <label className="block text-xs"><span className={t.textMuted}>Width</span><input type="range" min="40" max="360" value={overlay.w} onChange={(e) => updateOverlay({ w: Number(e.target.value) })} className="w-full accent-[#0099C9]" /></label>
+              <label className="block text-xs"><span className={t.textMuted}>Height</span><input type="range" min="40" max="240" value={overlay.h} onChange={(e) => updateOverlay({ h: Number(e.target.value) })} className="w-full accent-[#0099C9]" /></label>
               <input type="color" value={overlay.type === "text" ? overlay.color : "#0099C9"} onChange={(e) => updateOverlay(overlay.type === "text" ? { color: e.target.value } : { background: `${e.target.value}88` })} />
+              <button onClick={() => { updateClip(clip.id, { overlays: clip.overlays.filter((o) => o.id !== overlay.id) }); setSelectedOverlay(null); }} className="block text-xs text-red-400 hover:text-red-300">Remove overlay</button>
             </div>}
           </div>}
         </div>
