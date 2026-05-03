@@ -56,6 +56,12 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
 
   useEffect(() => { localStorage.setItem("trivix_dock_order", JSON.stringify(order)); }, [order]);
 
+  useEffect(() => {
+    const move = (e) => { window.__trivixDockPointer = { x: e.clientX, y: e.clientY }; };
+    window.addEventListener("mousemove", move);
+    return () => window.removeEventListener("mousemove", move);
+  }, []);
+
   const visibleOrder = order.filter((id) => !hiddenApps.includes(id));
 
   const apps = visibleOrder
@@ -64,7 +70,11 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
     .map((a) => ({ id: a.id, name: a.name, iconDark: a.iconDark, iconLight: a.iconLight, icon: isDark ? a.iconDark : a.iconLight, useDark: isDark }));
 
   const handleDragEnd = (result) => {
-    if (!result.destination) return;
+    if (!result.destination) {
+      const p = window.__trivixDockPointer;
+      if (p && p.y < window.innerHeight - 120) onDropAppToDesktop?.(result.draggableId, p);
+      return;
+    }
     const visIds = visibleOrder.slice();
     const [removed] = visIds.splice(result.source.index, 1);
     visIds.splice(result.destination.index, 0, removed);
