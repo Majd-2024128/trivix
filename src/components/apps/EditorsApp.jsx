@@ -17,6 +17,8 @@ const defaultOverlay = (type) => ({
   background: type === "text" ? "rgba(0,0,0,0.35)" : "rgba(0,153,201,0.55)",
 });
 
+const SHAPES = ["circle", "square", "triangle", "rectangle", "star", "diamond", "moon"];
+
 export default function EditorsApp() {
   const { isDark } = useTheme();
   const t = themed(isDark);
@@ -25,6 +27,7 @@ export default function EditorsApp() {
   const [selectedOverlay, setSelectedOverlay] = useState(null);
   const [playing, setPlaying] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [showShapes, setShowShapes] = useState(false);
   const videoRef = useRef(null);
   const imageRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -125,8 +128,10 @@ export default function EditorsApp() {
       <div className={`flex items-center gap-2 px-3 border-b ${t.border} ${isDark ? "bg-[#18181b]" : "bg-[#f7f8fa]"}`}>
         <button onClick={() => fileInputRef.current?.click()} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs ${button}`}><Upload className="w-3.5 h-3.5" /> Import</button>
         <button onClick={() => addOverlay("text")} disabled={!clip} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs disabled:opacity-40 ${button}`}><Type className="w-3.5 h-3.5" /> Text</button>
-        <button onClick={() => addOverlay("shape")} disabled={!clip} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs disabled:opacity-40 ${button}`}><Square className="w-3.5 h-3.5" /> Shape</button>
-        <button onClick={() => addOverlay("circle")} disabled={!clip} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs disabled:opacity-40 ${button}`}><Circle className="w-3.5 h-3.5" /> Circle</button>
+        <div className="relative">
+          <button onClick={() => setShowShapes((v) => !v)} disabled={!clip} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs disabled:opacity-40 ${button}`}><Square className="w-3.5 h-3.5" /> Shapes</button>
+          {showShapes && <div className={`absolute top-full mt-2 z-20 w-36 overflow-hidden rounded-lg border ${t.border} ${isDark ? "bg-[#202024]" : "bg-white"}`}>{SHAPES.map((shape) => <button key={shape} onClick={() => { addOverlay(shape); setShowShapes(false); }} className={`block w-full px-3 py-2 text-left text-xs capitalize ${button}`}>{shape}</button>)}</div>}
+        </div>
         <div className="flex-1" />
         <button onClick={exportPoster} disabled={!clip || exporting} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs bg-[#0099C9] hover:bg-[#0088b4] text-white disabled:opacity-40"><Download className="w-3.5 h-3.5" /> {exporting ? "Exporting" : "Export Poster"}</button>
         <input ref={fileInputRef} type="file" accept="video/*,image/*" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
