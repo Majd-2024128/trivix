@@ -86,7 +86,7 @@ function parseColor(str) {
   return null;
 }
 
-export default function SystemBar({ onDateClick }) {
+export default function SystemBar({ onDateClick, activities = [], dockHidden = false }) {
   const [time, setTime] = useState(new Date());
   const [battery, setBattery] = useState(null);
   const [charging, setCharging] = useState(false);
@@ -167,8 +167,16 @@ export default function SystemBar({ onDateClick }) {
       };
 
   return (
-    <div ref={ref} className="fixed bottom-3 right-3 z-50">
+    <div ref={ref} className="fixed bottom-3 right-3 z-50" style={{ transform: dockHidden ? "translateY(120px)" : "translateY(0)", opacity: dockHidden ? 0 : 1, transition: "transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.25s" }}>
       <div className="px-4 py-2 rounded-[20px] flex flex-row items-center gap-3" style={containerStyle}>
+        {activities.slice(0, 1).map((activity) => (
+          <div key={activity.id} className="flex items-center gap-1.5">
+            <span className={`text-xs font-space font-semibold tabular-nums ${textPrimary}`}>{activity.value}</span>
+          </div>
+        ))}
+
+        {activities.length > 0 && <div className={`w-px h-4 ${dividerCls}`} />}
+
         <div className="flex items-center gap-1.5">
           {getBatteryIcon()}
           <span className={`text-xs font-space font-medium ${textPrimary}`}>
