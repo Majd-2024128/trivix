@@ -20,9 +20,9 @@ export default function QuestBar({ onOpenApp, onOpenFile, onOpenFolder, onClose,
 
   const search = query.trim().toLowerCase();
   const appResults = search ? APP_DEFS.filter((a) => a.name.toLowerCase().includes(search)) : APP_DEFS;
-  const fileResults = flattenFs(readFs())
-    .filter((item) => item.path[0] !== "Applications" && item.name.toLowerCase().includes(search || " "))
-    .slice(0, 8);
+  const fileResults = search ? flattenFs(readFs())
+    .filter((item) => item.path[0] !== "Applications" && item.name.toLowerCase().includes(search))
+    .slice(0, 8) : [];
 
   return (
     <div className="fixed inset-0 z-[90] flex items-start justify-center pt-[20vh]" onMouseDown={onClose}>
