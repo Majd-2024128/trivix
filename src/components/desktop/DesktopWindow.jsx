@@ -17,7 +17,6 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
   const controlsRef = useRef(null);
 
   const isQuest = app.id === "quest";
-  const isGlimpse = app.id === "glimpse";
   const barColors = {
     calculator: isDark ? "rgba(35,35,37,0.94)" : "rgba(250,250,252,0.96)",
     clock: isDark ? "rgba(28,28,46,0.94)" : "rgba(245,245,247,0.96)",
@@ -111,7 +110,7 @@ export default function DesktopWindow({ app, onClose, onFocus, zIndex, initialPo
       style={{ left: pos.x, top: pos.y, width: size.w, height: size.h, zIndex, transition: interacting ? "none" : "box-shadow 0.2s", display: isMinimized ? "none" : "flex" }}
       onMouseDown={notifyFocus}
     >
-      {!isQuest && !isGlimpse && (
+      {!isQuest && (
         <div
           className="h-7 shrink-0 select-none flex items-center justify-center"
           style={{ cursor: isMaximized ? "default" : "grab", background: barColors[app.id] || (isDark ? "rgba(30, 30, 30, 0.85)" : "rgba(245, 245, 247, 0.9)"), backdropFilter: "blur(12px)", borderBottom: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.12)" }}
