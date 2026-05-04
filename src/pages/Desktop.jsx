@@ -26,7 +26,7 @@ import { File, Folder, Rocket, Pencil, Trash2, MoveRight } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
 import { gradientForTheme, DEFAULT_WALLPAPER_ID, getWallpaperById, normalizeWallpaperUrl } from "@/lib/wallpapers";
 import { getWidgetDef, GRID } from "@/lib/widgetDefs";
-import { readFs, writeFs, getNode, fileExt, uniqueName, ROOT_FOLDERS } from "@/lib/fileStore";
+import { readFs, writeFs, getNode, isDir, fileExt, uniqueName, ROOT_FOLDERS } from "@/lib/fileStore";
 
 const APP_COMPONENTS = {
   calculator: CalculatorApp,
@@ -143,11 +143,10 @@ export default function Desktop() {
     setWindows((prev) => {
       const next = prev.filter((w) => w.app.id !== appId);
       setMinimizedApps((m) => { const n = new Set(m); n.delete(appId); return n; });
-      if (next.length === 0) { setFocusedControls(null); setFocusedAppId(null); }
+      setFocusedControls(null); setFocusedAppId(null);
       return next;
     });
-    if (appId === focusedAppId) setFocusedAppId(null);
-  }, [focusedAppId]);
+  }, []);
 
   const minimizeWindow = useCallback((appId) => {
     setMinimizedApps((prev) => {
@@ -197,6 +196,8 @@ export default function Desktop() {
       const shortcutKey = e.altKey || e.metaKey || e.getModifierState?.("AltGraph");
       if (!shortcutKey) return;
       if (e.code === "KeyF") { e.preventDefault(); setShowQuestBar((v) => !v); }
+      else if (e.code === "KeyL") { e.preventDefault(); setLocked(true); }
+      else if (e.code === "KeyT") { e.preventDefault(); window.dispatchEvent(new CustomEvent("trivix-quest-next-tab")); }
       else if (e.code === "KeyD") { e.preventDefault(); if (allMinimized) { setMinimizedApps(new Set()); setAllMinimized(false); } else { setMinimizedApps(new Set(windows.map((w) => w.app.id))); setAllMinimized(true); setFocusedControls(null); setFocusedAppId(null); } }
       else if (e.code === "KeyC") { e.preventDefault(); if (focusedControls?.close) focusedControls.close(); }
       else if (e.code === "KeyS") { e.preventDefault(); cycleApps(); }
