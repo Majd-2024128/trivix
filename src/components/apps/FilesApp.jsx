@@ -4,7 +4,7 @@ import { useTheme, themed } from "@/lib/ThemeContext";
 import { APP_DEFS } from "@/components/desktop/Dock";
 import { readFs, writeFs, getNode, isDir, fileExt, uniqueName, ROOT_FOLDERS } from "@/lib/fileStore";
 
-export default function FilesApp({ onOpenApp, onOpenFile }) {
+export default function FilesApp({ onOpenApp, onOpenFile, initialPath }) {
   const { isDark } = useTheme();
   const t = themed(isDark);
   const fileInputRef = useRef(null);
@@ -21,6 +21,14 @@ export default function FilesApp({ onOpenApp, onOpenFile }) {
     window.addEventListener("trivix-fs-change", sync);
     return () => window.removeEventListener("trivix-fs-change", sync);
   }, []);
+  useEffect(() => { if (Array.isArray(initialPath)) setPath(initialPath); }, [initialPath]);
+  useEffect(() => {
+    if (!menu) return;
+    const dismiss = () => setMenu(null);
+    const onKey = (e) => { if (e.key === "Escape") setMenu(null); };
+    const t = setTimeout(() => { window.addEventListener("mousedown", dismiss); window.addEventListener("keydown", onKey); }, 0);
+    return () => { clearTimeout(t); window.removeEventListener("mousedown", dismiss); window.removeEventListener("keydown", onKey); };
+  }, [menu]);
 
   const save = (newFs) => { setFs(newFs); writeFs(newFs); };
   const current = getNode(fs, path);
@@ -136,7 +144,7 @@ export default function FilesApp({ onOpenApp, onOpenFile }) {
           <div className="grid grid-cols-4 gap-3">
             {entries.map((name) => {
               const entry = current[name];
-              return <div key={name} draggable={entry?.kind !== "app"} onDragStart={(e) => e.dataTransfer.setData("trivix/file-name", name)} onDrop={(e) => { e.preventDefault(); moveWithinCurrent(e.dataTransfer.getData("trivix/file-name"), name); }} onDragOver={(e) => isDir(entry) && e.preventDefault()} onDoubleClick={() => navigate(name)} onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setMenu({ name, x: e.clientX, y: e.clientY }); }} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer transition-colors ${t.hover} group`}>
+              return <div key={name} draggable={entry?.kind !== "app"} onDragStart={(e) => e.dataTransfer.setData("trivix/file-name", name)} onDrop={(e) => { e.preventDefault(); moveWithinCurrent(e.dataTransfer.getData("trivix/file-name"), name); }} onDragOver={(e) => isDir(entry) && e.preventDefault()} onDoubleClickCapture={() => navigate(name)} onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setMenu({ name, x: e.clientX, y: e.clientY }); }} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer transition-colors ${t.hover} group`}>
                 <FileThumb name={name} entry={entry} />
                 {renaming === name ? <input autoFocus value={renameValue} onChange={(e) => setRenameValue(e.target.value)} onBlur={commitRename} onKeyDown={(e) => e.key === "Enter" && commitRename()} className={`text-xs text-center w-full rounded ${t.inputBg} outline-none`} /> : <span className="text-xs text-center truncate w-full">{name}</span>}
               </div>;
@@ -147,9 +155,9 @@ export default function FilesApp({ onOpenApp, onOpenFile }) {
 
       {menu && current[menu.name]?.kind !== "app" && <div onMouseDown={(e) => e.stopPropagation()} className="fixed z-[120] min-w-[170px] overflow-hidden rounded-lg border border-white/10 bg-[#1e1e1e]/95 shadow-2xl backdrop-blur-xl" style={{ left: Math.min(menu.x, window.innerWidth - 190), top: Math.min(menu.y, window.innerHeight - 220) }}>
         <button onClick={() => startRename(menu.name)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white/85 hover:bg-white/10"><Pencil className="w-3.5 h-3.5" /> Rename</button>
-        <div className="px-3 py-1 text-[10px] uppercase text-white/35">Move to</div>
+        {!isDir(current[menu.name]) && <><div className="px-3 py-1 text-[10px] uppercase text-white/35">Move to</div>
         {ROOT_FOLDERS.filter((f) => f !== path[0] && f !== "Applications").map((folder) => <button key={folder} onClick={() => moveEntry(menu.name, folder)} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-white/75 hover:bg-white/10"><MoveRight className="w-3 h-3" /> {folder}</button>)}
-        <div className="h-px bg-white/10" />
+        <div className="h-px bg-white/10" /></>}
         <button onClick={() => deleteEntry(menu.name)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-400 hover:bg-white/10"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
       </div>}
 
