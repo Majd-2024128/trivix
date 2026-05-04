@@ -72,7 +72,7 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
   const handleDragEnd = (result) => {
     if (!result.destination) {
       const p = window.__trivixDockPointer;
-      if (p && p.y < window.innerHeight - 120) onDropAppToDesktop?.(result.draggableId, p);
+      if (p && p.y < window.innerHeight - 40) onDropAppToDesktop?.(result.draggableId, p);
       return;
     }
     const visIds = visibleOrder.slice();
@@ -107,7 +107,7 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
           opacity: show && !dockHidden ? 1 : 0,
         }}
       >
-        <DragDropContext onDragStart={handleDragStart} onDragEnd={(result) => { window.__trivixDraggingDockApp = null; handleDragEnd(result); }}>
+        <DragDropContext onDragStart={handleDragStart} onDragEnd={(result) => { handleDragEnd(result); window.__trivixDraggingDockApp = null; }}>
           <Droppable droppableId="dock" direction="horizontal">
             {(provided) => (
               <div

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Search } from "lucide-react";
+import { File, Folder, Search } from "lucide-react";
 import { APP_DEFS } from "./Dock";
 import { useTheme } from "@/lib/ThemeContext";
+import { flattenFs, isDir, readFs } from "@/lib/fileStore";
 
-export default function QuestBar({ onOpenApp, onClose, hiddenApps = [], onAddToDock }) {
+export default function QuestBar({ onOpenApp, onOpenFile, onOpenFolder, onClose, hiddenApps = [], onAddToDock }) {
   const [query, setQuery] = useState("");
   const [menuApp, setMenuApp] = useState(null);
   const inputRef = useRef(null);
@@ -17,9 +18,11 @@ export default function QuestBar({ onOpenApp, onClose, hiddenApps = [], onAddToD
     return () => { clearTimeout(t); window.removeEventListener("mousedown", dismiss); };
   }, [menuApp]);
 
-  const results = query.trim()
-    ? APP_DEFS.filter((a) => a.name.toLowerCase().includes(query.toLowerCase()))
-    : APP_DEFS;
+  const search = query.trim().toLowerCase();
+  const appResults = search ? APP_DEFS.filter((a) => a.name.toLowerCase().includes(search)) : APP_DEFS;
+  const fileResults = search ? flattenFs(readFs())
+    .filter((item) => item.path[0] !== "Applications" && item.name.toLowerCase().includes(search))
+    .slice(0, 8) : [];
 
   return (
     <div className="fixed inset-0 z-[90] flex items-start justify-center pt-[20vh]" onMouseDown={onClose}>
@@ -42,9 +45,9 @@ export default function QuestBar({ onOpenApp, onClose, hiddenApps = [], onAddToD
             className={`flex-1 bg-transparent outline-none text-base ${isDark ? "text-white placeholder:text-white/30" : "text-black placeholder:text-black/30"}`}
           />
         </div>
-        {results.length > 0 && (
+        {(appResults.length > 0 || fileResults.length > 0) && (
           <div className={`border-t ${isDark ? "border-white/10" : "border-black/10"} max-h-[300px] overflow-y-auto`}>
-            {results.map((app) => (
+            {appResults.map((app) => (
               <button
                 key={app.id}
                 onClick={() => {
@@ -56,6 +59,23 @@ export default function QuestBar({ onOpenApp, onClose, hiddenApps = [], onAddToD
               >
                 <img src={isDark ? app.iconDark : app.iconLight} alt="" className="w-8 h-8 rounded-lg object-cover" />
                 <span>{app.name}</span>
+              </button>
+            ))}
+            {fileResults.length > 0 && <div className={`px-4 pb-1 pt-2 text-[10px] uppercase tracking-wide ${isDark ? "text-white/35" : "text-black/35"}`}>Files</div>}
+            {fileResults.map((item) => (
+              <button
+                key={`${item.path.join("/")}/${item.name}`}
+                onClick={() => {
+                  if (isDir(item.entry)) onOpenFolder?.(item.path);
+                  else if (item.entry?.kind === "app") onOpenApp?.(APP_DEFS.find((a) => a.id === item.entry.appId));
+                  else onOpenFile?.(item.entry, item.name);
+                  onClose();
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${isDark ? "text-white/80 hover:bg-white/10" : "text-black/80 hover:bg-black/5"}`}
+              >
+                {isDir(item.entry) ? <Folder className="w-8 h-8 rounded-lg p-1.5 text-blue-400" /> : <File className="w-8 h-8 rounded-lg p-1.5 text-cyan-400" />}
+                <span className="min-w-0 flex-1 truncate text-left">{item.name}</span>
+                <span className={`text-[10px] ${isDark ? "text-white/35" : "text-black/35"}`}>/{item.path.join("/")}</span>
               </button>
             ))}
           </div>

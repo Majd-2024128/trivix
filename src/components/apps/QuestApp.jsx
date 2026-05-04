@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Search, ArrowLeft, ArrowRight, RotateCw, Home, Globe, Plus, X, ExternalLink, Star, Bookmark } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
+import { getNode, readFs, uniqueName, writeFs } from "@/lib/fileStore";
 
 const GOOGLE_SEARCH_URL = "https://www.google.com/search?igu=1&q=";
 const HOME_URL = "https://www.google.com/webhp?igu=1";
@@ -44,6 +45,16 @@ export default function QuestApp({ onRequestClose, onDragStart }) {
   const activeTab = tabs.find((tb) => tb.id === activeId) || tabs[0];
 
   useEffect(() => { localStorage.setItem("quest_bookmarks", JSON.stringify(bookmarks)); }, [bookmarks]);
+  useEffect(() => {
+    const nextTab = () => {
+      setActiveId((current) => {
+        const index = tabs.findIndex((tb) => tb.id === current);
+        return tabs[(index + 1) % tabs.length]?.id || current;
+      });
+    };
+    window.addEventListener("trivix-quest-next-tab", nextTab);
+    return () => window.removeEventListener("trivix-quest-next-tab", nextTab);
+  }, [tabs]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -67,6 +78,16 @@ export default function QuestApp({ onRequestClose, onDragStart }) {
   }, []);
 
   const updateTab = (id, patch) => setTabs((prev) => prev.map((tb) => (tb.id === id ? { ...tb, ...patch } : tb)));
+  const saveDownloadToFiles = (url) => {
+    if (!/\.(pdf|zip|png|jpe?g|gif|webp|mp4|mov|mp3|wav|txt|csv|docx?|xlsx?)(\?|$)/i.test(url)) return;
+    const fs = readFs();
+    const downloads = getNode(fs, ["Downloads"]);
+    const clean = url.split("?")[0].split("/").pop() || "download.file";
+    if (Object.values(downloads).some((entry) => entry?.sourceUrl === url)) return;
+    const name = uniqueName(downloads, clean);
+    downloads[name] = { __file: true, kind: "download", name, type: "link/download", sourceUrl: url, addedAt: Date.now() };
+    writeFs(fs);
+  };
 
   const navigate = (raw) => {
     const finalUrl = buildUrl(raw);
@@ -177,7 +198,12 @@ export default function QuestApp({ onRequestClose, onDragStart }) {
         {tabs.map((tb) => (
           <div key={tb.id} className="absolute inset-0" style={{ display: tb.id === activeId ? "block" : "none" }}>
             <iframe ref={(el) => { if (el) iframeRefs.current[tb.id] = el; }}
-              src={tb.url} onLoad={() => updateTab(tb.id, { loading: false, title: extractTitle(tb.url) })}
+              src={tb.url} onLoad={() => {
+                let currentUrl = tb.url;
+                try { currentUrl = iframeRefs.current[tb.id]?.contentWindow?.location?.href || tb.url; } catch {}
+                saveDownloadToFiles(currentUrl);
+                updateTab(tb.id, { loading: false, url: currentUrl, inputValue: currentUrl === HOME_URL ? "" : currentUrl, title: extractTitle(currentUrl) });
+              }}
               className="w-full h-full border-0" style={{ zoom: 0.85 }}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
               title={`Quest tab ${tb.id}`} />

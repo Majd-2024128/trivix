@@ -22,11 +22,11 @@ import QuestBar from "../components/desktop/QuestBar";
 import DateTimePopup from "../components/desktop/DateTimePopup";
 import MobileGate from "../components/MobileGate";
 import LockScreen from "../components/desktop/LockScreen";
-import { File, Folder, Rocket, Pencil, Trash2, MoveRight } from "lucide-react";
+import { File, Folder, Rocket, Trash2, MoveRight } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
 import { gradientForTheme, DEFAULT_WALLPAPER_ID, getWallpaperById, normalizeWallpaperUrl } from "@/lib/wallpapers";
 import { getWidgetDef, GRID } from "@/lib/widgetDefs";
-import { readFs, writeFs, getNode, fileExt, uniqueName, ROOT_FOLDERS } from "@/lib/fileStore";
+import { readFs, writeFs, getNode, isDir, fileExt, uniqueName, ROOT_FOLDERS } from "@/lib/fileStore";
 
 const APP_COMPONENTS = {
   calculator: CalculatorApp,
@@ -143,11 +143,10 @@ export default function Desktop() {
     setWindows((prev) => {
       const next = prev.filter((w) => w.app.id !== appId);
       setMinimizedApps((m) => { const n = new Set(m); n.delete(appId); return n; });
-      if (next.length === 0) { setFocusedControls(null); setFocusedAppId(null); }
+      setFocusedControls(null); setFocusedAppId(null);
       return next;
     });
-    if (appId === focusedAppId) setFocusedAppId(null);
-  }, [focusedAppId]);
+  }, []);
 
   const minimizeWindow = useCallback((appId) => {
     setMinimizedApps((prev) => {
@@ -197,6 +196,8 @@ export default function Desktop() {
       const shortcutKey = e.altKey || e.metaKey || e.getModifierState?.("AltGraph");
       if (!shortcutKey) return;
       if (e.code === "KeyF") { e.preventDefault(); setShowQuestBar((v) => !v); }
+      else if (e.code === "KeyL") { e.preventDefault(); setLocked(true); }
+      else if (e.code === "KeyT") { e.preventDefault(); window.dispatchEvent(new CustomEvent("trivix-quest-next-tab")); }
       else if (e.code === "KeyD") { e.preventDefault(); if (allMinimized) { setMinimizedApps(new Set()); setAllMinimized(false); } else { setMinimizedApps(new Set(windows.map((w) => w.app.id))); setAllMinimized(true); setFocusedControls(null); setFocusedAppId(null); } }
       else if (e.code === "KeyC") { e.preventDefault(); if (focusedControls?.close) focusedControls.close(); }
       else if (e.code === "KeyS") { e.preventDefault(); cycleApps(); }
@@ -215,6 +216,14 @@ export default function Desktop() {
     const t = setTimeout(() => { window.addEventListener("mousedown", dismiss); window.addEventListener("keydown", onKey); }, 0);
     return () => { clearTimeout(t); window.removeEventListener("mousedown", dismiss); window.removeEventListener("keydown", onKey); };
   }, [desktopMenu]);
+
+  useEffect(() => {
+    if (!fileMenu) return;
+    const dismiss = () => setFileMenu(null);
+    const onKey = (e) => { if (e.key === "Escape") setFileMenu(null); };
+    const t = setTimeout(() => { window.addEventListener("mousedown", dismiss); window.addEventListener("keydown", onKey); }, 0);
+    return () => { clearTimeout(t); window.removeEventListener("mousedown", dismiss); window.removeEventListener("keydown", onKey); };
+  }, [fileMenu]);
 
   const handleDesktopContext = (e) => { if (e.target !== e.currentTarget && !e.target.dataset?.desktopBg) return; e.preventDefault(); setDesktopMenu({ x: e.clientX, y: e.clientY }); };
 
@@ -266,6 +275,7 @@ export default function Desktop() {
 
   const deleteDesktopFile = (name) => { const newFs = readFs(); delete getNode(newFs, ["Desktop"])[name]; writeFs(newFs); setDesktopItems((prev) => prev.filter((i) => i.name !== name)); setFileMenu(null); };
   const moveDesktopFile = (name, folder) => { const newFs = readFs(); const from = getNode(newFs, ["Desktop"]); const entry = from[name]; if (!entry) return; delete from[name]; const dest = getNode(newFs, [folder]); dest[uniqueName(dest, name)] = entry; writeFs(newFs); setDesktopItems((prev) => prev.filter((i) => i.name !== name)); setFileMenu(null); };
+  const openFolder = useCallback((path) => openApp(APP_DEFS.find((a) => a.id === "files"), { initialPath: path }), [openApp]);
 
   const openAppIds = windows.map((w) => w.app.id);
   const isSettingsOpen = openAppIds.includes("settings");
@@ -289,11 +299,11 @@ export default function Desktop() {
       {windows.map((w) => {
         const AppComponent = APP_COMPONENTS[w.app.id];
         return <DesktopWindow key={w.app.id} app={w.app} zIndex={w.zIndex + 40} initialPos={w.initialPos} isMinimized={minimizedApps.has(w.app.id)} onMinimize={() => minimizeWindow(w.app.id)} onClose={() => closeWindow(w.app.id)} onFocus={(controls) => focusWindow(w.app.id, controls)} onFullscreenChange={setDockHidden}>
-          {w.app.isSettings ? <SettingsApp onSelectWallpaper={handleSelectWallpaper} onUploadWallpaper={handleUploadWallpaper} currentWallpaperId={wallpaperId} isCustomWallpaper={!!customWallpaper} wallpaperFit={wallpaperFit} onWallpaperFitChange={setWallpaperFit} brightness={brightness} onBrightnessChange={setBrightness} dockAutoHide={dockAutoHide} onDockAutoHideChange={setDockAutoHide} onReset={handleReset} lockSettings={lockSettings} onLockSettingsChange={setLockSettings} /> : AppComponent ? <AppComponent {...(w.props || {})} onOpenApp={openApp} onOpenFile={openFile} /> : null}
+          {w.app.isSettings ? <SettingsApp onSelectWallpaper={handleSelectWallpaper} onUploadWallpaper={handleUploadWallpaper} currentWallpaperId={wallpaperId} isCustomWallpaper={!!customWallpaper} wallpaperFit={wallpaperFit} onWallpaperFitChange={setWallpaperFit} brightness={brightness} onBrightnessChange={setBrightness} dockAutoHide={dockAutoHide} onDockAutoHideChange={setDockAutoHide} onReset={handleReset} lockSettings={lockSettings} onLockSettingsChange={setLockSettings} /> : AppComponent ? <AppComponent {...(w.props || {})} onOpenApp={openApp} onOpenFile={openFile} onOpenFolder={openFolder} /> : null}
         </DesktopWindow>;
       })}
 
-      <SystemDock onOpenSettings={() => openApp(SETTINGS_APP)} isSettingsOpen={isSettingsOpen} onCloseSettings={() => closeWindow("settings")} onLock={() => setLocked(true)} dockHidden={dockHidden} />
+      <SystemDock onOpenSettings={() => openApp(SETTINGS_APP)} isSettingsOpen={isSettingsOpen} onCloseSettings={() => closeWindow("settings")} onLock={() => setLocked(true)} dockHidden={dockHidden} activities={activities} />
       <Dock onOpenApp={openApp} openApps={openAppIds} onCloseApp={closeWindow} autoHide={dockAutoHide} hiddenApps={hiddenApps} onToggleHideApp={toggleHideApp} onDropAppToDesktop={addAppToDesktop} dockHidden={dockHidden} />
       <SystemBar onDateClick={() => setShowDatePopup((v) => !v)} activities={activities} dockHidden={dockHidden} />
 
@@ -305,10 +315,10 @@ export default function Desktop() {
 
       {desktopMenu?.reset && <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/20 backdrop-blur-sm"><div className={`w-[320px] rounded-2xl border p-5 shadow-2xl ${isDark ? "border-white/10 bg-[#1c1c1e] text-white" : "border-black/10 bg-white text-[#1c1c1e]"}`}><h2 className="text-lg font-semibold">Reset Trivix?</h2><p className="mt-2 text-sm opacity-60">This will clear settings, files, and desktop layout.</p><div className="mt-5 flex justify-end gap-2"><button onClick={() => setDesktopMenu(null)} className="rounded-lg px-3 py-2 text-sm hover:bg-black/10">Cancel</button><button onClick={confirmReset} className="rounded-lg bg-red-500 px-3 py-2 text-sm text-white">Reset</button></div></div></div>}
 
-      {fileMenu && <div onMouseDown={(e) => e.stopPropagation()} className="fixed z-[120] min-w-[160px] overflow-hidden rounded-lg border border-white/10 bg-[#1e1e1e]/95 shadow-2xl backdrop-blur-xl" style={{ left: fileMenu.x, top: fileMenu.y }}><div className="px-3 py-1.5 text-xs text-white/40">{fileMenu.name}</div>{ROOT_FOLDERS.filter((f) => f !== "Desktop" && f !== "Applications").map((f) => <button key={f} onClick={() => moveDesktopFile(fileMenu.name, f)} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-white/80 hover:bg-white/10"><MoveRight className="w-3 h-3" /> Move to {f}</button>)}<div className="h-px bg-white/10" /><button onClick={() => deleteDesktopFile(fileMenu.name)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-400 hover:bg-white/10"><Trash2 className="w-3.5 h-3.5" /> Delete</button></div>}
+      {fileMenu && <div onMouseDown={(e) => e.stopPropagation()} className="fixed z-[120] min-w-[160px] overflow-hidden rounded-lg border border-white/10 bg-[#1e1e1e]/95 shadow-2xl backdrop-blur-xl" style={{ left: fileMenu.x, top: fileMenu.y }}><div className="px-3 py-1.5 text-xs text-white/40">{fileMenu.name}</div>{!isDir(desktopNode[fileMenu.name]) && ROOT_FOLDERS.filter((f) => f !== "Desktop" && f !== "Applications").map((f) => <button key={f} onClick={() => moveDesktopFile(fileMenu.name, f)} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-white/80 hover:bg-white/10"><MoveRight className="w-3 h-3" /> Move to {f}</button>)}{!isDir(desktopNode[fileMenu.name]) && <div className="h-px bg-white/10" />}<button onClick={() => deleteDesktopFile(fileMenu.name)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-400 hover:bg-white/10"><Trash2 className="w-3.5 h-3.5" /> Delete</button></div>}
 
       {showPicker && <div data-widget-picker-dialog><WidgetPicker onAddWidget={addWidget} onClose={() => setShowPicker(false)} /></div>}
-      {showQuestBar && <QuestBar onOpenApp={openApp} onClose={() => setShowQuestBar(false)} hiddenApps={hiddenApps} onAddToDock={toggleHideApp} />}
+      {showQuestBar && <QuestBar onOpenApp={openApp} onOpenFile={openFile} onOpenFolder={openFolder} onClose={() => setShowQuestBar(false)} hiddenApps={hiddenApps} onAddToDock={toggleHideApp} />}
       {showDatePopup && <DateTimePopup onClose={() => setShowDatePopup(false)} />}
       {locked && <LockScreen wallpaper={normalizeWallpaperUrl(customWallpaper) || lockWallpaper} fit={wallpaperFit} settings={lockSettings} onUnlock={() => { sessionStorage.setItem("trivix_unlocked", "1"); setLocked(false); }} />}
     </div>

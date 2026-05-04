@@ -2,7 +2,7 @@ import { Keyboard, MousePointer2, LayoutGrid, AppWindow, Folder, Sparkles } from
 import { useTheme, themed } from "@/lib/ThemeContext";
 
 const sections = [
-  { icon: Keyboard, title: "Shortcuts", items: ["Alt/Option + F opens Quest Bar", "Alt/Option + D shows the desktop", "Alt/Option + S cycles every open app", "Alt/Option + C closes the focused app"] },
+  { icon: Keyboard, title: "Shortcuts", items: ["Alt/Option + F opens Quest Bar", "Alt/Option + L locks the screen", "Alt/Option + T switches Quest tabs", "Alt/Option + D shows the desktop", "Alt/Option + S cycles every open app", "Alt/Option + C closes the focused app"] },
   { icon: MousePointer2, title: "Desktop", items: ["Right-click the desktop to add widgets", "Drag app icons from the dock to the desktop", "Right-click desktop files to rename, move, or delete"] },
   { icon: LayoutGrid, title: "Widgets", items: ["Widgets snap to a clean 20px grid", "Resize from the lower-right corner", "Right-click a widget to remove it"] },
   { icon: Folder, title: "Files", items: ["Drop files from your computer into Files", "Drag files into folders", "Double-click a file to preview it in Glimpse"] },

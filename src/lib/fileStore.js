@@ -21,6 +21,10 @@ export const writeFs = (fs) => {
 };
 export const getNode = (fs, path = []) => path.reduce((node, p) => node?.[p] || {}, fs);
 export const fileExt = (name = "") => (name.includes(".") ? name.split(".").pop().slice(0, 4).toUpperCase() : "FILE");
+export const flattenFs = (fs, basePath = []) => Object.entries(getNode(fs, basePath)).flatMap(([name, entry]) => {
+  if (isDir(entry)) return [{ name, entry, path: [...basePath, name], kind: "folder" }, ...flattenFs(fs, [...basePath, name])];
+  return [{ name, entry, path: basePath, kind: entry?.kind === "app" ? "app" : "file" }];
+});
 export const uniqueName = (node, fileName) => {
   let name = fileName, i = 1;
   while (node[name]) {
