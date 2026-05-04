@@ -4,7 +4,7 @@ import systemIcon from "@/assets/system-icon.png";
 import systemIconLight from "@/assets/system-icon-light.png";
 import { useTheme } from "@/lib/ThemeContext";
 
-export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSettings, onLock, dockHidden = false }) {
+export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSettings, onLock, dockHidden = false, activities = [] }) {
   const { isDark } = useTheme();
   const [hovered, setHovered] = useState(false);
   const [contextMenu, setContextMenu] = useState(false);
@@ -34,7 +34,12 @@ export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSett
 
   return (
     <div className="fixed bottom-3 left-3 z-50">
-      <div className="flex items-center rounded-[20px] border border-white/15 bg-white/[0.18] px-3 py-2 shadow-2xl shadow-black/25 backdrop-blur-2xl">
+      <div className="flex items-center gap-2 rounded-[20px] border border-white/15 bg-white/[0.18] px-3 py-2 shadow-2xl shadow-black/25 backdrop-blur-2xl">
+        {activities.slice(0, 1).map((activity) => (
+          <div key={activity.id} className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums ${isDark ? "bg-white/10 text-white/85" : "bg-black/10 text-black/75"}`}>
+            {activity.label} {activity.value}
+          </div>
+        ))}
         <div className="relative flex flex-col items-center">
           <AnimatePresence>
             {contextMenu && (
