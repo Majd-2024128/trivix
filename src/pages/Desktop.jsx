@@ -303,7 +303,7 @@ export default function Desktop() {
         </DesktopWindow>;
       })}
 
-      <SystemDock onOpenSettings={() => openApp(SETTINGS_APP)} isSettingsOpen={isSettingsOpen} onCloseSettings={() => closeWindow("settings")} onLock={() => setLocked(true)} dockHidden={dockHidden} />
+      <SystemDock onOpenSettings={() => openApp(SETTINGS_APP)} isSettingsOpen={isSettingsOpen} onCloseSettings={() => closeWindow("settings")} onLock={() => setLocked(true)} dockHidden={dockHidden} activities={activities} />
       <Dock onOpenApp={openApp} openApps={openAppIds} onCloseApp={closeWindow} autoHide={dockAutoHide} hiddenApps={hiddenApps} onToggleHideApp={toggleHideApp} onDropAppToDesktop={addAppToDesktop} dockHidden={dockHidden} />
       <SystemBar onDateClick={() => setShowDatePopup((v) => !v)} activities={activities} dockHidden={dockHidden} />
 
