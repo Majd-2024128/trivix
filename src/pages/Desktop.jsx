@@ -22,7 +22,7 @@ import QuestBar from "../components/desktop/QuestBar";
 import DateTimePopup from "../components/desktop/DateTimePopup";
 import MobileGate from "../components/MobileGate";
 import LockScreen from "../components/desktop/LockScreen";
-import { File, Folder, Rocket, Pencil, Trash2, MoveRight } from "lucide-react";
+import { File, Folder, Rocket, Trash2, MoveRight } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
 import { gradientForTheme, DEFAULT_WALLPAPER_ID, getWallpaperById, normalizeWallpaperUrl } from "@/lib/wallpapers";
 import { getWidgetDef, GRID } from "@/lib/widgetDefs";
