@@ -217,6 +217,14 @@ export default function Desktop() {
     return () => { clearTimeout(t); window.removeEventListener("mousedown", dismiss); window.removeEventListener("keydown", onKey); };
   }, [desktopMenu]);
 
+  useEffect(() => {
+    if (!fileMenu) return;
+    const dismiss = () => setFileMenu(null);
+    const onKey = (e) => { if (e.key === "Escape") setFileMenu(null); };
+    const t = setTimeout(() => { window.addEventListener("mousedown", dismiss); window.addEventListener("keydown", onKey); }, 0);
+    return () => { clearTimeout(t); window.removeEventListener("mousedown", dismiss); window.removeEventListener("keydown", onKey); };
+  }, [fileMenu]);
+
   const handleDesktopContext = (e) => { if (e.target !== e.currentTarget && !e.target.dataset?.desktopBg) return; e.preventDefault(); setDesktopMenu({ x: e.clientX, y: e.clientY }); };
 
   const findFreeSpot = useCallback((sizeCells) => {
@@ -267,6 +275,7 @@ export default function Desktop() {
 
   const deleteDesktopFile = (name) => { const newFs = readFs(); delete getNode(newFs, ["Desktop"])[name]; writeFs(newFs); setDesktopItems((prev) => prev.filter((i) => i.name !== name)); setFileMenu(null); };
   const moveDesktopFile = (name, folder) => { const newFs = readFs(); const from = getNode(newFs, ["Desktop"]); const entry = from[name]; if (!entry) return; delete from[name]; const dest = getNode(newFs, [folder]); dest[uniqueName(dest, name)] = entry; writeFs(newFs); setDesktopItems((prev) => prev.filter((i) => i.name !== name)); setFileMenu(null); };
+  const openFolder = useCallback((path) => openApp(APP_DEFS.find((a) => a.id === "files"), { initialPath: path }), [openApp]);
 
   const openAppIds = windows.map((w) => w.app.id);
   const isSettingsOpen = openAppIds.includes("settings");
