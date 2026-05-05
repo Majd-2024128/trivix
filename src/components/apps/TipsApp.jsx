@@ -2,12 +2,12 @@ import { Keyboard, MousePointer2, LayoutGrid, AppWindow, Folder, Sparkles } from
 import { useTheme, themed } from "@/lib/ThemeContext";
 
 const sections = [
-  { icon: Keyboard, title: "Shortcuts", items: ["Alt/Option + F opens Quest Bar", "Alt/Option + L locks the screen", "Alt/Option + T switches Quest tabs", "Alt/Option + D shows the desktop", "Alt/Option + S cycles every open app", "Alt/Option + C closes the focused app"] },
-  { icon: MousePointer2, title: "Desktop", items: ["Right-click the desktop to add widgets", "Drag app icons from the dock to the desktop", "Right-click desktop files to rename, move, or delete"] },
+  { icon: Keyboard, title: "Shortcuts", items: ["Alt/Option + F opens Quest Bar", "Alt/Option + L locks the screen", "Alt/Option + K enters sleep mode", "Alt/Option + T switches Quest tabs", "Alt/Option + D shows the desktop", "Alt/Option + S cycles every open app", "Alt/Option + C closes the focused app", "Alt/Option + B bold (in Notes)", "Alt/Option + I italic (in Notes)", "Alt/Option + U underline (in Notes)"] },
+  { icon: MousePointer2, title: "Desktop", items: ["Right-click the desktop to add widgets", "Drag app icons from the dock to the desktop", "Right-click desktop files to rename, move, or delete", "Right-click dock icons to pin/hide them"] },
   { icon: LayoutGrid, title: "Widgets", items: ["Widgets snap to a clean 20px grid", "Resize from the lower-right corner", "Right-click a widget to remove it"] },
-  { icon: Folder, title: "Files", items: ["Drop files from your computer into Files", "Drag files into folders", "Double-click a file to preview it in Glimpse"] },
-  { icon: AppWindow, title: "Apps", items: ["Quest is the web browser", "Editors trims videos and builds overlays", "System changes wallpapers, display, dock, and lock screen"] },
-  { icon: Sparkles, title: "Pro touches", items: ["Alt/Option-click expand to fill behind the docks", "Clock activities appear as minimal live status", "Wallpaper fit can switch between Cover and Contain"] },
+  { icon: Folder, title: "Files", items: ["Drop files from your computer into Files", "Drag files into folders", "Double-click a file to preview it in Glimpse", "Paste files with Ctrl/Cmd+V"] },
+  { icon: AppWindow, title: "Apps", items: ["Quest is the web browser", "Canvas is for drawing and painting", "System changes wallpapers, display, dock, and lock screen", "Notes supports rich text, images, and highlighting", "Weather lets you pin up to 5 favorite cities"] },
+  { icon: Sparkles, title: "Pro touches", items: ["Alt/Option-click expand to fill behind the docks", "Double-click Quest's title bar to maximize", "Wallpaper fit can switch between Cover and Contain", "Change cursor size and language in System settings"] },
 ];
 
 export default function TipsApp() {

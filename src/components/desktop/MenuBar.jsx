@@ -1,7 +1,7 @@
 import { X, ArrowDown, Maximize2 } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
 
-export default function MenuBar({ controls, activities = [] }) {
+export default function MenuBar({ controls }) {
   const { isDark } = useTheme();
   const displayName = controls?.appName === "Settings" ? "System" : controls?.appName;
   const labelColor = isDark ? "text-white/60" : "text-black/70";
@@ -10,7 +10,7 @@ export default function MenuBar({ controls, activities = [] }) {
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 h-7 flex items-center px-4 z-50 select-none"
+      className="fixed top-0 left-0 right-0 h-7 flex items-center px-4 z-[200] select-none"
       style={{
         background: isDark ? "rgba(30, 40, 30, 0.65)" : "rgba(245, 245, 247, 0.75)",
         backdropFilter: "blur(30px)",
@@ -18,16 +18,16 @@ export default function MenuBar({ controls, activities = [] }) {
         borderBottom: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.08)",
       }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1">
         {controls ? (
           <>
-            <button onClick={controls.close} className="flex items-center justify-center hover:opacity-70 transition-opacity">
+            <button onClick={controls.close} className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-white/10 transition-colors">
               <X className="w-3 h-3 text-red-500" strokeWidth={3} />
             </button>
-            <button onClick={controls.minimize} className="flex items-center justify-center hover:opacity-70 transition-opacity">
+            <button onClick={controls.minimize} className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-white/10 transition-colors">
               <ArrowDown className={`w-3 h-3 ${isDark ? "text-white" : "text-black/80"}`} strokeWidth={2.5} />
             </button>
-            <button onClick={(e) => controls.maximize?.(e)} className="flex items-center justify-center hover:opacity-70 transition-opacity">
+            <button onClick={(e) => controls.maximize?.(e)} className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-white/10 transition-colors">
               <Maximize2 className={`w-3 h-3 ${isDark ? "text-green-400" : "text-green-600"}`} strokeWidth={2.5} />
             </button>
             {displayName && (
@@ -36,27 +36,18 @@ export default function MenuBar({ controls, activities = [] }) {
           </>
         ) : (
           <>
-            <div className="flex items-center justify-center opacity-25">
+            <div className="flex items-center justify-center w-7 h-7 opacity-25">
               <X className={`w-3 h-3 ${inactiveX}`} strokeWidth={3} />
             </div>
-            <div className="flex items-center justify-center opacity-25">
+            <div className="flex items-center justify-center w-7 h-7 opacity-25">
               <ArrowDown className={`w-3 h-3 ${inactiveArrow}`} strokeWidth={2.5} />
             </div>
-            <div className="flex items-center justify-center opacity-25">
+            <div className="flex items-center justify-center w-7 h-7 opacity-25">
               <Maximize2 className={`w-3 h-3 ${isDark ? "text-green-400" : "text-green-600"}`} strokeWidth={2.5} />
             </div>
           </>
         )}
       </div>
-      {activities.length > 0 && (
-        <div className="ml-auto flex items-center gap-1.5">
-          {activities.slice(0, 3).map((activity) => (
-            <div key={activity.id} className={`rounded-full px-2.5 py-1 text-[11px] font-medium tabular-nums ${isDark ? "bg-white/10 text-white/80" : "bg-black/10 text-black/75"}`}>
-              {activity.label} {activity.value}
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { BatteryFull, BatteryMedium, BatteryLow, BatteryCharging } from "lucide-react";
 
-// Sample average luminance of the desktop background under the SystemBar element.
-// Returns true if the area behind the bar is "light" (use dark text), false for dark (use light text).
 async function isAreaLight(rect) {
   try {
     const desktop = document.querySelector('[data-desktop-bg="true"]');
@@ -11,7 +9,6 @@ async function isAreaLight(rect) {
     const bgImage = cs.backgroundImage;
     const bgColor = cs.backgroundColor;
 
-    // Try to extract a url(...) image
     const urlMatch = bgImage && bgImage.match(/url\((['"]?)(.*?)\1\)/);
     if (urlMatch) {
       const src = urlMatch[2];
@@ -26,7 +23,6 @@ async function isAreaLight(rect) {
       const cw = 64, ch = 64;
       canvas.width = cw; canvas.height = ch;
       const ctx = canvas.getContext("2d");
-      // Replicate background-size: cover, position: center
       const dRatio = window.innerWidth / window.innerHeight;
       const iRatio = img.width / img.height;
       let sx, sy, sw, sh;
@@ -37,7 +33,6 @@ async function isAreaLight(rect) {
         sw = img.width; sh = img.width / dRatio;
         sx = 0; sy = (img.height - sh) / 2;
       }
-      // Map rect (viewport coords) into image coords
       const rx = sx + (rect.left / window.innerWidth) * sw;
       const ry = sy + (rect.top / window.innerHeight) * sh;
       const rw = (rect.width / window.innerWidth) * sw;
@@ -46,15 +41,12 @@ async function isAreaLight(rect) {
       const data = ctx.getImageData(0, 0, cw, ch).data;
       let total = 0, count = 0;
       for (let i = 0; i < data.length; i += 16) {
-        const r = data[i], g = data[i + 1], b = data[i + 2];
-        total += 0.299 * r + 0.587 * g + 0.114 * b;
+        total += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
         count++;
       }
-      const lum = total / count;
-      return lum > 150;
+      return total / count > 120; // lowered threshold for better sensitivity
     }
 
-    // Gradient or solid: parse color stops and pick the dominant brightness
     const colors = (bgImage + " " + bgColor).match(/#([0-9a-f]{3,8})\b|rgba?\([^)]+\)/gi) || [];
     if (colors.length === 0) return false;
     let total = 0, count = 0;
@@ -65,7 +57,7 @@ async function isAreaLight(rect) {
       count++;
     }
     if (!count) return false;
-    return total / count > 150;
+    return total / count > 120;
   } catch {
     return false;
   }
@@ -86,11 +78,11 @@ function parseColor(str) {
   return null;
 }
 
-export default function SystemBar({ onDateClick, activities = [], dockHidden = false }) {
+export default function SystemBar({ onDateClick, dockHidden = false }) {
   const [time, setTime] = useState(new Date());
   const [battery, setBattery] = useState(null);
   const [charging, setCharging] = useState(false);
-  const [light, setLight] = useState(false); // true => background is light, use dark text
+  const [light, setLight] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -109,7 +101,6 @@ export default function SystemBar({ onDateClick, activities = [], dockHidden = f
     }
   }, []);
 
-  // Re-sample background brightness when the desktop background changes or window resizes
   useEffect(() => {
     let cancelled = false;
     const sample = async () => {
@@ -119,6 +110,7 @@ export default function SystemBar({ onDateClick, activities = [], dockHidden = f
       if (!cancelled) setLight(result);
     };
     sample();
+    const interval = setInterval(sample, 3000); // re-sample periodically
     const desktop = document.querySelector('[data-desktop-bg="true"]');
     let observer;
     if (desktop && "MutationObserver" in window) {
@@ -128,6 +120,7 @@ export default function SystemBar({ onDateClick, activities = [], dockHidden = f
     window.addEventListener("resize", sample);
     return () => {
       cancelled = true;
+      clearInterval(interval);
       observer?.disconnect();
       window.removeEventListener("resize", sample);
     };
@@ -136,9 +129,8 @@ export default function SystemBar({ onDateClick, activities = [], dockHidden = f
   const formattedTime = time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
   const formattedDate = time.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
-  // Adaptive colors
-  const textPrimary = light ? "text-black/85" : "text-white/90";
-  const textSecondary = light ? "text-black/55" : "text-white/60";
+  const textPrimary = light ? "text-black/90" : "text-white/95";
+  const textSecondary = light ? "text-black/60" : "text-white/65";
   const dividerCls = light ? "bg-black/20" : "bg-white/20";
   const batteryNeutral = light ? "text-black/70" : "text-white/70";
 
@@ -152,31 +144,23 @@ export default function SystemBar({ onDateClick, activities = [], dockHidden = f
 
   const containerStyle = light
     ? {
-        background: "rgba(255,255,255,0.45)",
+        background: "rgba(255,255,255,0.55)",
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
-        border: "1px solid rgba(0,0,0,0.08)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.4)",
+        border: "1px solid rgba(0,0,0,0.12)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.4)",
       }
     : {
-        background: "rgba(255,255,255,0.12)",
+        background: "rgba(0,0,0,0.35)",
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
         border: "1px solid rgba(255,255,255,0.15)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
       };
 
   return (
     <div ref={ref} className="fixed bottom-3 right-3 z-50" style={{ transform: dockHidden ? "translateY(120px)" : "translateY(0)", opacity: dockHidden ? 0 : 1, transition: "transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.25s" }}>
       <div className="px-4 py-2 rounded-[20px] flex flex-row items-center gap-3" style={containerStyle}>
-        {activities.slice(0, 1).map((activity) => (
-          <div key={activity.id} className="flex items-center gap-1.5">
-            <span className={`text-xs font-space font-semibold tabular-nums ${textPrimary}`}>{activity.value}</span>
-          </div>
-        ))}
-
-        {activities.length > 0 && <div className={`w-px h-4 ${dividerCls}`} />}
-
         <div className="flex items-center gap-1.5">
           {getBatteryIcon()}
           <span className={`text-xs font-space font-medium ${textPrimary}`}>
