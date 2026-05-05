@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function DockIcon({ app, onClick, isOpen, onClose, onHideFromDock }) {
+export default function DockIcon({ app, onClick, isOpen, onClose, onHideFromDock, isHidden, onPinToDock }) {
   const [isHovered, setIsHovered] = useState(false);
   const [contextMenu, setContextMenu] = useState(false);
 
@@ -45,7 +45,14 @@ export default function DockIcon({ app, onClick, isOpen, onClose, onHideFromDock
               <button onClick={() => { setContextMenu(false); onClick(); }}
                 className="w-full px-3 py-2 text-left text-sm text-white/80 hover:bg-white/10 font-space transition-colors">Open</button>
             )}
-            {onHideFromDock && (
+            {isHidden && onPinToDock && (
+              <>
+                <div className="h-px bg-white/10" />
+                <button onClick={() => { setContextMenu(false); onPinToDock(); }}
+                  className="w-full px-3 py-2 text-left text-sm text-cyan-400 hover:bg-white/10 font-space transition-colors">Pin to Dock</button>
+              </>
+            )}
+            {onHideFromDock && !isHidden && (
               <>
                 <div className="h-px bg-white/10" />
                 <button onClick={() => { setContextMenu(false); if (isOpen) onClose(); onHideFromDock(); }}

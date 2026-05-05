@@ -19,8 +19,8 @@ import chessIconDark from "@/assets/chess-icon-dark.png";
 import chessIconLight from "@/assets/chess-icon.png";
 import filesIconDark from "@/assets/files-icon-dark.png";
 import filesIconLight from "@/assets/files-icon-light.png";
-import editorsIconDark from "@/assets/editors-icon-dark.png";
-import editorsIconLight from "@/assets/editors-icon-light.png";
+import canvasIconDark from "@/assets/canvas-icon-dark.png";
+import canvasIconLight from "@/assets/canvas-icon-light.png";
 import tipsIconDark from "@/assets/tips-icon-dark.png";
 import tipsIconLight from "@/assets/tips-icon-light.png";
 
@@ -33,7 +33,7 @@ export const APP_DEFS = [
   { id: "quest", name: "Quest", iconDark: questIconDark, iconLight: questIconLight },
   { id: "chess", name: "Chess", iconDark: chessIconDark, iconLight: chessIconLight },
   { id: "files", name: "Files", iconDark: filesIconDark, iconLight: filesIconLight },
-  { id: "editors", name: "Editors", iconDark: editorsIconDark, iconLight: editorsIconLight },
+  { id: "canvas", name: "Canvas", iconDark: canvasIconDark, iconLight: canvasIconLight },
   { id: "tips", name: "Tips", iconDark: tipsIconDark, iconLight: tipsIconLight },
 ];
 
@@ -41,17 +41,24 @@ export const APPS = APP_DEFS.map((a) => ({ id: a.id, name: a.name, icon: a.iconD
 
 const DEFAULT_ORDER = APP_DEFS.map((a) => a.id);
 
-export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hiddenApps = [], onToggleHideApp, onDropAppToDesktop, dockHidden = false }) {
+export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hiddenApps = [], onToggleHideApp, onPinApp, onDropAppToDesktop, dockHidden = false }) {
   const { isDark } = useTheme();
   const [order, setOrder] = useState(() => {
-    try { const s = localStorage.getItem("trivix_dock_order"); return s ? JSON.parse(s) : DEFAULT_ORDER; } catch { return DEFAULT_ORDER; }
+    try {
+      const s = localStorage.getItem("trivix_dock_order");
+      let parsed = s ? JSON.parse(s) : DEFAULT_ORDER;
+      // Replace old editors with canvas
+      parsed = parsed.map((id) => id === "editors" ? "canvas" : id);
+      return parsed;
+    } catch { return DEFAULT_ORDER; }
   });
   const [hovered, setHovered] = useState(false);
 
-  // Ensure new apps are in order
   useEffect(() => {
     const missing = DEFAULT_ORDER.filter((id) => !order.includes(id));
     if (missing.length > 0) setOrder((prev) => [...prev, ...missing]);
+    // Remove old editors
+    setOrder((prev) => prev.filter((id) => id !== "editors"));
   }, []);
 
   useEffect(() => { localStorage.setItem("trivix_dock_order", JSON.stringify(order)); }, [order]);
@@ -62,7 +69,8 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
     return () => window.removeEventListener("mousemove", move);
   }, []);
 
-  const visibleOrder = order.filter((id) => !hiddenApps.includes(id));
+  // Show hidden apps temporarily when they are open
+  const visibleOrder = order.filter((id) => !hiddenApps.includes(id) || openApps.includes(id));
 
   const apps = visibleOrder
     .map((id) => APP_DEFS.find((a) => a.id === id))
@@ -78,8 +86,7 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
     const visIds = visibleOrder.slice();
     const [removed] = visIds.splice(result.source.index, 1);
     visIds.splice(result.destination.index, 0, removed);
-    // Rebuild full order preserving hidden apps in their relative positions
-    const newOrder = [...visIds, ...order.filter((id) => hiddenApps.includes(id))];
+    const newOrder = [...visIds, ...order.filter((id) => hiddenApps.includes(id) && !openApps.includes(id))];
     setOrder(newOrder);
   };
 
@@ -130,6 +137,8 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
                           isOpen={openApps.includes(app.id)}
                           onClose={() => onCloseApp(app.id)}
                           onHideFromDock={onToggleHideApp ? () => onToggleHideApp(app.id) : undefined}
+                          isHidden={hiddenApps.includes(app.id)}
+                          onPinToDock={onPinApp && hiddenApps.includes(app.id) ? () => onPinApp(app.id) : undefined}
                         />
                       </div>
                     )}
