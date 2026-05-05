@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Folder, File, ArrowLeft, Home, Plus, Trash2, Upload, Rocket, Image as ImageIcon, Pencil, MoveRight } from "lucide-react";
+import { Folder, File, ArrowLeft, Home, Plus, Trash2, Upload, Image as ImageIcon, Pencil, MoveRight } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 import { APP_DEFS } from "@/components/desktop/Dock";
 import { readFs, writeFs, getNode, isDir, fileExt, uniqueName, ROOT_FOLDERS } from "@/lib/fileStore";
@@ -26,8 +26,8 @@ export default function FilesApp({ onOpenApp, onOpenFile, initialPath }) {
     if (!menu) return;
     const dismiss = () => setMenu(null);
     const onKey = (e) => { if (e.key === "Escape") setMenu(null); };
-    const t = setTimeout(() => { window.addEventListener("mousedown", dismiss); window.addEventListener("keydown", onKey); }, 0);
-    return () => { clearTimeout(t); window.removeEventListener("mousedown", dismiss); window.removeEventListener("keydown", onKey); };
+    const timer = setTimeout(() => { window.addEventListener("mousedown", dismiss); window.addEventListener("keydown", onKey); }, 0);
+    return () => { clearTimeout(timer); window.removeEventListener("mousedown", dismiss); window.removeEventListener("keydown", onKey); };
   }, [menu]);
 
   const save = (newFs) => { setFs(newFs); writeFs(newFs); };
@@ -60,14 +60,17 @@ export default function FilesApp({ onOpenApp, onOpenFile, initialPath }) {
   };
 
   const deleteEntry = (name) => {
-    if (current[name]?.kind === "app") return;
+    // Don't delete from Applications root
+    if (path[0] === "Applications" && path.length === 1 && current[name]?.kind === "app") return;
     const newFs = clone();
     delete nodeAt(newFs)[name];
     save(newFs); setMenu(null);
   };
 
   const commitRename = () => {
-    if (!renaming || !renameValue.trim() || current[renaming]?.kind === "app") { setRenaming(null); return; }
+    if (!renaming || !renameValue.trim()) { setRenaming(null); return; }
+    // Don't rename apps in Applications
+    if (path[0] === "Applications" && path.length === 1 && current[renaming]?.kind === "app") { setRenaming(null); return; }
     const newFs = clone();
     const node = nodeAt(newFs);
     const entry = node[renaming];
@@ -76,8 +79,23 @@ export default function FilesApp({ onOpenApp, onOpenFile, initialPath }) {
     save(newFs); setRenaming(null); setMenu(null);
   };
 
+  const copyEntry = (name, targetRoot) => {
+    const newFs = clone();
+    const from = nodeAt(newFs);
+    const entry = from[name];
+    if (!entry) return;
+    delete from[name];
+    const dest = getNode(newFs, [targetRoot]);
+    dest[uniqueName(dest, name)] = JSON.parse(JSON.stringify(entry));
+    save(newFs); setMenu(null);
+  };
+
   const moveEntry = (name, targetRoot) => {
-    if (current[name]?.kind === "app") return;
+    // For apps, copy instead of move
+    if (current[name]?.kind === "app") {
+      copyEntry(name, targetRoot);
+      return;
+    }
     const newFs = clone();
     const from = nodeAt(newFs);
     const entry = from[name];
@@ -107,7 +125,16 @@ export default function FilesApp({ onOpenApp, onOpenFile, initialPath }) {
   };
 
   const moveWithinCurrent = (name, folderName) => {
-    if (!isDir(current[folderName]) || name === folderName || current[name]?.kind === "app") return;
+    if (!isDir(current[folderName]) || name === folderName) return;
+    if (current[name]?.kind === "app") {
+      // Copy app into folder
+      const newFs = clone();
+      const node = nodeAt(newFs);
+      const entry = JSON.parse(JSON.stringify(node[name]));
+      node[folderName][uniqueName(node[folderName], name)] = entry;
+      save(newFs);
+      return;
+    }
     const newFs = clone();
     const node = nodeAt(newFs);
     const entry = node[name];
@@ -116,15 +143,38 @@ export default function FilesApp({ onOpenApp, onOpenFile, initialPath }) {
     save(newFs);
   };
 
+  // Handle clipboard paste
+  useEffect(() => {
+    const handlePaste = async (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const files = [];
+      for (const item of items) {
+        if (item.kind === "file") files.push(item.getAsFile());
+      }
+      if (files.length > 0) addFiles(files);
+    };
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [path]);
+
   const handleDrop = (e) => { e.preventDefault(); e.stopPropagation(); addFiles(e.dataTransfer.files); };
   const startRename = (name) => { setRenaming(name); setRenameValue(name); };
 
   const FileThumb = ({ name, entry }) => {
     if (isDir(entry)) return <Folder className="w-10 h-10 text-blue-400" />;
-    if (entry?.kind === "app") return <Rocket className="w-10 h-10 text-cyan-400" />;
+    if (entry?.kind === "app") {
+      const appDef = APP_DEFS.find((a) => a.id === entry.appId);
+      if (appDef) {
+        return <img src={isDark ? appDef.iconDark : appDef.iconLight} alt="" className="w-10 h-10 rounded-lg object-cover" />;
+      }
+      return <Folder className="w-10 h-10 text-cyan-400" />;
+    }
     if (entry?.dataUrl && entry?.type?.startsWith("image/")) return <img src={entry.dataUrl} alt="" className="w-11 h-11 rounded-lg object-cover" />;
     return <div className={`relative w-10 h-10 ${t.textMuted}`}><File className="w-10 h-10" /><span className="absolute inset-x-1 bottom-2 text-[7px] font-bold text-center">{fileExt(name)}</span></div>;
   };
+
+  const isAppInApplications = path[0] === "Applications" && path.length === 1;
 
   return (
     <div className={`flex flex-col h-full ${isDark ? "bg-[#1c1c1e] text-white" : "bg-white text-[#1c1c1e]"} font-space`}>
@@ -144,7 +194,7 @@ export default function FilesApp({ onOpenApp, onOpenFile, initialPath }) {
           <div className="grid grid-cols-4 gap-3">
             {entries.map((name) => {
               const entry = current[name];
-              return <div key={name} draggable={entry?.kind !== "app"} onDragStart={(e) => e.dataTransfer.setData("trivix/file-name", name)} onDrop={(e) => { e.preventDefault(); moveWithinCurrent(e.dataTransfer.getData("trivix/file-name"), name); }} onDragOver={(e) => isDir(entry) && e.preventDefault()} onDoubleClickCapture={() => navigate(name)} onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setMenu({ name, x: e.clientX, y: e.clientY }); }} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer transition-colors ${t.hover} group`}>
+              return <div key={name} draggable onDragStart={(e) => e.dataTransfer.setData("trivix/file-name", name)} onDrop={(e) => { e.preventDefault(); moveWithinCurrent(e.dataTransfer.getData("trivix/file-name"), name); }} onDragOver={(e) => isDir(entry) && e.preventDefault()} onDoubleClickCapture={() => navigate(name)} onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setMenu({ name, x: e.clientX, y: e.clientY }); }} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer transition-colors ${t.hover} group`}>
                 <FileThumb name={name} entry={entry} />
                 {renaming === name ? <input autoFocus value={renameValue} onChange={(e) => setRenameValue(e.target.value)} onBlur={commitRename} onKeyDown={(e) => e.key === "Enter" && commitRename()} className={`text-xs text-center w-full rounded ${t.inputBg} outline-none`} /> : <span className="text-xs text-center truncate w-full">{name}</span>}
               </div>;
@@ -153,12 +203,16 @@ export default function FilesApp({ onOpenApp, onOpenFile, initialPath }) {
         )}
       </div>
 
-      {menu && current[menu.name]?.kind !== "app" && <div onMouseDown={(e) => e.stopPropagation()} className="fixed z-[120] min-w-[170px] overflow-hidden rounded-lg border border-white/10 bg-[#1e1e1e]/95 shadow-2xl backdrop-blur-xl" style={{ left: Math.min(menu.x, window.innerWidth - 190), top: Math.min(menu.y, window.innerHeight - 220) }}>
-        <button onClick={() => startRename(menu.name)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white/85 hover:bg-white/10"><Pencil className="w-3.5 h-3.5" /> Rename</button>
-        {!isDir(current[menu.name]) && <><div className="px-3 py-1 text-[10px] uppercase text-white/35">Move to</div>
+      {menu && <div onMouseDown={(e) => e.stopPropagation()} className="fixed z-[200] min-w-[170px] overflow-hidden rounded-lg border border-white/10 bg-[#1e1e1e]/95 shadow-2xl backdrop-blur-xl" style={{ left: Math.min(menu.x, window.innerWidth - 190), top: Math.min(menu.y, window.innerHeight - 220) }}>
+        {!(isAppInApplications && current[menu.name]?.kind === "app") && (
+          <button onClick={() => startRename(menu.name)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white/85 hover:bg-white/10"><Pencil className="w-3.5 h-3.5" /> Rename</button>
+        )}
+        {!isDir(current[menu.name]) && <><div className="px-3 py-1 text-[10px] uppercase text-white/35">{current[menu.name]?.kind === "app" ? "Copy to" : "Move to"}</div>
         {ROOT_FOLDERS.filter((f) => f !== path[0] && f !== "Applications").map((folder) => <button key={folder} onClick={() => moveEntry(menu.name, folder)} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-white/75 hover:bg-white/10"><MoveRight className="w-3 h-3" /> {folder}</button>)}
         <div className="h-px bg-white/10" /></>}
-        <button onClick={() => deleteEntry(menu.name)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-400 hover:bg-white/10"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
+        {!(isAppInApplications && current[menu.name]?.kind === "app") && (
+          <button onClick={() => deleteEntry(menu.name)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-400 hover:bg-white/10"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
+        )}
       </div>}
 
       <div className={`px-4 py-2 border-t ${t.border} text-center`}><p className={`${t.textFaint} text-[10px]`}>Copyright © 2026 Tejt</p></div>
