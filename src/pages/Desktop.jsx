@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import MenuBar from "../components/desktop/MenuBar";
 import CalculatorApp from "../components/apps/CalculatorApp";
 import ClockApp from "../components/apps/ClockApp";
@@ -22,6 +22,7 @@ import QuestBar from "../components/desktop/QuestBar";
 import DateTimePopup from "../components/desktop/DateTimePopup";
 import MobileGate from "../components/MobileGate";
 import LockScreen from "../components/desktop/LockScreen";
+import NotificationCenter from "../components/desktop/NotificationCenter";
 import { File, Folder, Trash2, MoveRight } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
 import { gradientForTheme, DEFAULT_WALLPAPER_ID, getWallpaperById, normalizeWallpaperUrl } from "@/lib/wallpapers";
@@ -102,10 +103,11 @@ export default function Desktop() {
   const [hiddenApps, setHiddenApps] = usePersistedState("trivix_hidden_apps", []);
   const [lockSettings, setLockSettings] = usePersistedState("trivix_lock_settings", { style: "bold", size: 92, wallpaperId: DEFAULT_WALLPAPER_ID, password: "" });
   const [desktopItems, setDesktopItems] = usePersistedState("trivix_desktop_items", []);
-  const [cursorSize, setCursorSize] = usePersistedState("trivix_cursor_size", 32);
-  const [cursorBlink, setCursorBlink] = usePersistedState("trivix_cursor_blink", 530);
   const [sameWallpaper, setSameWallpaper] = usePersistedState("trivix_same_wallpaper", true);
   const [sleeping, setSleeping] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifCenter, setShowNotifCenter] = useState(false);
+  const [activeNotif, setActiveNotif] = useState(null);
 
   const [minimizedApps, setMinimizedApps] = useState(new Set());
   const [desktopMenu, setDesktopMenu] = useState(null);
@@ -119,39 +121,52 @@ export default function Desktop() {
   const [dockHidden, setDockHidden] = useState(false);
   const [locked, setLocked] = useState(() => sessionStorage.getItem("trivix_unlocked") !== "1");
 
-  // Apply cursor size
-  useEffect(() => {
-    document.documentElement.style.setProperty("--cursor-size", `${cursorSize}px`);
-  }, [cursorSize]);
-
-  // Apply cursor blink
-  useEffect(() => {
-    const style = document.createElement("style");
-    style.textContent = `@keyframes trivix-blink { 0%,100% { opacity: 1 } 50% { opacity: 0 } } input:focus, textarea:focus, [contenteditable]:focus { caret-color: auto; animation: trivix-blink ${cursorBlink}ms step-end infinite; }`;
-    document.head.appendChild(style);
-    return () => style.remove();
-  }, [cursorBlink]);
+  // Save pre-sleep state
+  const preSleepRef = useRef(null);
 
   useEffect(() => { const stored = localStorage.getItem("trivix_wallpaper"); if (!stored || stored === '"green"') setWallpaperId(DEFAULT_WALLPAPER_ID); }, [setWallpaperId]);
   useEffect(() => { const h = (e) => e.preventDefault(); document.addEventListener("contextmenu", h); return () => document.removeEventListener("contextmenu", h); }, []);
   useEffect(() => { const style = document.createElement("style"); style.textContent = "a[href*='lovable.dev'], #lovable-badge, [data-lovable-badge] { display: none !important; }"; document.head.appendChild(style); return () => style.remove(); }, []);
+
+  // Notification system
+  const addNotification = useCallback((notif) => {
+    const id = Date.now();
+    const entry = { id, ...notif, time: new Date() };
+    setNotifications((prev) => [entry, ...prev].slice(0, 50));
+    setActiveNotif(entry);
+    setTimeout(() => setActiveNotif((cur) => cur?.id === id ? null : cur), 10000);
+  }, []);
+
+  // Listen for trivix notifications
+  useEffect(() => {
+    const handler = (e) => addNotification(e.detail);
+    window.addEventListener("trivix-notification", handler);
+    return () => window.removeEventListener("trivix-notification", handler);
+  }, [addNotification]);
 
   const closeWindow = useCallback((appId) => {
     setWindows((prev) => {
       const next = prev.filter((w) => w.app.id !== appId);
       setMinimizedApps((m) => { const n = new Set(m); n.delete(appId); return n; });
       // Focus next visible window
-      const visible = next.filter((w) => !minimizedApps.has(w.app.id));
-      if (visible.length > 0) {
-        const top = visible.reduce((a, b) => a.zIndex > b.zIndex ? a : b);
+      if (next.length > 0) {
+        const sorted = [...next].sort((a, b) => b.zIndex - a.zIndex);
+        const top = sorted[0];
         setFocusedAppId(top.app.id);
+        setFocusedControls(null); // Will be set by DesktopWindow onFocus
+        // Force focus by bumping z
+        setNextZ((z) => {
+          const nz = z + 1;
+          setWindows((cur) => cur.map((w) => w.app.id === top.app.id ? { ...w, zIndex: nz } : w));
+          return nz + 1;
+        });
       } else {
         setFocusedControls(null);
         setFocusedAppId(null);
       }
       return next;
     });
-  }, [minimizedApps]);
+  }, []);
 
   const minimizeWindow = useCallback((appId) => {
     setMinimizedApps((prev) => {
@@ -175,7 +190,17 @@ export default function Desktop() {
     setNextZ((z) => z + 1); setFocusedAppId(app.id);
   }, [windows, nextZ, minimizedApps]);
 
-  const openFile = useCallback((file, name) => openApp(GLIMPSE_APP, { file, name }), [openApp]);
+  // Open TXT files in Notes instead of Glimpse
+  const openFile = useCallback((file, name) => {
+    const ext = fileExt(name || file?.name || "").toLowerCase();
+    if (ext === "txt" && file?.dataUrl) {
+      // Open in Notes with the text content
+      openApp(APP_DEFS.find((a) => a.id === "notes") || { id: "notes", name: "Notes" }, { importedText: file.dataUrl, importedName: name });
+    } else {
+      openApp(GLIMPSE_APP, { file, name });
+    }
+  }, [openApp]);
+
   const closeAllWindows = useCallback(() => { setWindows([]); setMinimizedApps(new Set()); setFocusedControls(null); setFocusedAppId(null); }, []);
 
   const focusWindow = useCallback((appId, controls) => {
@@ -206,14 +231,19 @@ export default function Desktop() {
       if (e.code === "KeyF") { e.preventDefault(); setShowQuestBar((v) => !v); }
       else if (e.code === "KeyL") { e.preventDefault(); setLocked(true); }
       else if (e.code === "KeyK") { e.preventDefault(); setSleeping(true); }
-      else if (e.code === "KeyT") { e.preventDefault(); window.dispatchEvent(new CustomEvent("trivix-quest-next-tab")); }
       else if (e.code === "KeyD") { e.preventDefault(); if (allMinimized) { setMinimizedApps(new Set()); setAllMinimized(false); } else { setMinimizedApps(new Set(windows.map((w) => w.app.id))); setAllMinimized(true); setFocusedControls(null); setFocusedAppId(null); } }
-      else if (e.code === "KeyC") { e.preventDefault(); if (focusedControls?.close) focusedControls.close(); }
+      else if (e.code === "KeyC") {
+        e.preventDefault();
+        // Close focused app, then auto-focus next
+        if (focusedAppId) {
+          closeWindow(focusedAppId);
+        }
+      }
       else if (e.code === "KeyS") { e.preventDefault(); cycleApps(); }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [focusedControls, windows, allMinimized, cycleApps, sleeping]);
+  }, [focusedAppId, focusedControls, windows, allMinimized, cycleApps, sleeping, closeWindow]);
 
   const handleSelectWallpaper = useCallback((id) => { setWallpaperId(id); setCustomWallpaper(null); }, [setWallpaperId, setCustomWallpaper]);
   const handleUploadWallpaper = useCallback((urlString) => { setCustomWallpaper(normalizeWallpaperUrl(urlString)); }, [setCustomWallpaper]);
@@ -267,15 +297,30 @@ export default function Desktop() {
   const desktopNode = getNode(fs, ["Desktop"]);
   const desktopEntries = Object.entries(desktopNode);
 
-  // Auto-position desktop items in a vertical grid without overlap
+  // Compute widget occupied pixel rects for desktop icon avoidance
+  const widgetRects = useMemo(() => widgets.map((w) => ({
+    left: w.pos.x * GRID,
+    top: w.pos.y * GRID,
+    right: (w.pos.x + w.size.w) * GRID,
+    bottom: (w.pos.y + w.size.h) * GRID,
+  })), [widgets]);
+
+  // Auto-position desktop items in a vertical grid without overlap (avoiding widgets)
   const displayedItems = desktopEntries.map(([name], idx) => {
     const existing = desktopItems.find((i) => i.name === name);
     if (existing) return existing;
-    // Calculate a free grid slot
     const maxRows = Math.floor((window.innerHeight - 120) / (ICON_H + ICON_GAP));
     const col = Math.floor(idx / Math.max(1, maxRows));
     const row = idx % Math.max(1, maxRows);
-    return { name, x: ICON_START_X + col * (ICON_W + ICON_GAP), y: ICON_START_Y + row * (ICON_H + ICON_GAP) };
+    let x = ICON_START_X + col * (ICON_W + ICON_GAP);
+    let y = ICON_START_Y + row * (ICON_H + ICON_GAP);
+    // Shift if overlapping widgets
+    for (const wr of widgetRects) {
+      if (x < wr.right && x + ICON_W > wr.left && y < wr.bottom && y + ICON_H > wr.top) {
+        y = wr.bottom + ICON_GAP;
+      }
+    }
+    return { name, x, y };
   });
 
   const moveDesktopItem = (name, x, y) => {
@@ -290,7 +335,6 @@ export default function Desktop() {
     const newFs = readFs(); const node = getNode(newFs, ["Desktop"]); const name = uniqueName(node, `${app.name}.app`);
     node[name] = { __file: true, kind: "app", appId: app.id, name: app.name };
     writeFs(newFs);
-    // Find next free vertical slot
     const maxRows = Math.floor((window.innerHeight - 120) / (ICON_H + ICON_GAP));
     const count = Object.keys(getNode(readFs(), ["Desktop"])).length;
     const col = Math.floor((count - 1) / Math.max(1, maxRows));
@@ -301,6 +345,11 @@ export default function Desktop() {
   const deleteDesktopFile = (name) => { const newFs = readFs(); delete getNode(newFs, ["Desktop"])[name]; writeFs(newFs); setDesktopItems((prev) => prev.filter((i) => i.name !== name)); setFileMenu(null); };
   const moveDesktopFile = (name, folder) => { const newFs = readFs(); const from = getNode(newFs, ["Desktop"]); const entry = from[name]; if (!entry) return; delete from[name]; const dest = getNode(newFs, [folder]); dest[uniqueName(dest, name)] = entry; writeFs(newFs); setDesktopItems((prev) => prev.filter((i) => i.name !== name)); setFileMenu(null); };
   const openFolder = useCallback((path) => openApp(APP_DEFS.find((a) => a.id === "files"), { initialPath: path }), [openApp]);
+
+  // Open image in Canvas from Glimpse
+  const openInCanvas = useCallback((file) => {
+    openApp(APP_DEFS.find((a) => a.id === "canvas") || { id: "canvas", name: "Canvas" }, { importImage: file });
+  }, [openApp]);
 
   const openAppIds = windows.map((w) => w.app.id);
   const isSettingsOpen = openAppIds.includes("settings");
@@ -313,16 +362,16 @@ export default function Desktop() {
 
   if (isMobile) return <MobileGate />;
 
-  // Sleep mode
+  // Sleep mode - just show black, don't change any state
   if (sleeping) {
     return <div className="fixed inset-0 bg-black z-[9999]" onClick={() => setSleeping(false)} />;
   }
 
   return (
-    <div className="fixed inset-0 overflow-hidden font-space select-none" data-desktop-bg="true" onContextMenu={handleDesktopContext} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { const appId = e.dataTransfer.getData("trivix/app-id") || window.__trivixDraggingDockApp; if (appId) addAppToDesktop(appId, { x: e.clientX, y: e.clientY }); }} style={{ background: isImageWallpaper ? undefined : wallpaperResolved, backgroundImage: isImageWallpaper ? wallpaperResolved : undefined, backgroundSize: wallpaperFit, backgroundRepeat: "no-repeat", backgroundPosition: "center center", backgroundAttachment: "fixed", filter: `brightness(${brightness / 100})` }}>
+    <div className="fixed inset-0 overflow-hidden font-space select-none" data-desktop-bg="true" onContextMenu={handleDesktopContext} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { const appId = e.dataTransfer.getData("trivix/app-id") || window.__trivixDraggingDockApp; if (appId) addAppToDesktop(appId, { x: e.clientX, y: e.clientY }); }} style={{ background: isImageWallpaper ? "#030814" : wallpaperResolved, backgroundImage: isImageWallpaper ? wallpaperResolved : undefined, backgroundSize: wallpaperFit, backgroundRepeat: "no-repeat", backgroundPosition: "center center", backgroundAttachment: "fixed", filter: `brightness(${brightness / 100})` }}>
       {!isImageWallpaper && <div data-desktop-bg="true" className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: `radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(0,0,0,0.1) 0%, transparent 50%)` }} />}
 
-      <MenuBar controls={focusedControls} />
+      <MenuBar controls={focusedAppId && !minimizedApps.has(focusedAppId) ? focusedControls : null} onNotifClick={() => setShowNotifCenter((v) => !v)} notifCount={notifications.length} />
 
       {displayedItems.map((item) => desktopNode[item.name] && <DesktopFileIcon key={item.name} item={item} entry={desktopNode[item.name]} isDark={isDark} onOpen={(entry, name) => entry.kind === "app" ? openApp(APP_DEFS.find((a) => a.id === entry.appId)) : openFile(entry, name)} onMove={moveDesktopItem} onMenu={setFileMenu} />)}
 
@@ -331,7 +380,7 @@ export default function Desktop() {
       {windows.map((w) => {
         const AppComponent = APP_COMPONENTS[w.app.id];
         return <DesktopWindow key={w.app.id} app={w.app} zIndex={w.zIndex + 40} initialPos={w.initialPos} isMinimized={minimizedApps.has(w.app.id)} onMinimize={() => minimizeWindow(w.app.id)} onClose={() => closeWindow(w.app.id)} onFocus={(controls) => focusWindow(w.app.id, controls)} onFullscreenChange={setDockHidden}>
-          {w.app.isSettings ? <SettingsApp onSelectWallpaper={handleSelectWallpaper} onUploadWallpaper={handleUploadWallpaper} currentWallpaperId={wallpaperId} isCustomWallpaper={!!customWallpaper} wallpaperFit={wallpaperFit} onWallpaperFitChange={setWallpaperFit} brightness={brightness} onBrightnessChange={setBrightness} dockAutoHide={dockAutoHide} onDockAutoHideChange={setDockAutoHide} onReset={handleReset} lockSettings={lockSettings} onLockSettingsChange={setLockSettings} cursorSize={cursorSize} onCursorSizeChange={setCursorSize} cursorBlink={cursorBlink} onCursorBlinkChange={setCursorBlink} sameWallpaper={sameWallpaper} onSameWallpaperChange={setSameWallpaper} /> : AppComponent ? <AppComponent {...(w.props || {})} onOpenApp={openApp} onOpenFile={openFile} onOpenFolder={openFolder} /> : null}
+          {w.app.isSettings ? <SettingsApp onSelectWallpaper={handleSelectWallpaper} onUploadWallpaper={handleUploadWallpaper} currentWallpaperId={wallpaperId} isCustomWallpaper={!!customWallpaper} wallpaperFit={wallpaperFit} onWallpaperFitChange={setWallpaperFit} brightness={brightness} onBrightnessChange={setBrightness} dockAutoHide={dockAutoHide} onDockAutoHideChange={setDockAutoHide} onReset={handleReset} lockSettings={lockSettings} onLockSettingsChange={setLockSettings} sameWallpaper={sameWallpaper} onSameWallpaperChange={setSameWallpaper} /> : AppComponent ? <AppComponent {...(w.props || {})} onOpenApp={openApp} onOpenFile={openFile} onOpenFolder={openFolder} onOpenInCanvas={w.app.id === "glimpse" ? openInCanvas : undefined} onNotify={addNotification} /> : null}
         </DesktopWindow>;
       })}
 
@@ -352,6 +401,18 @@ export default function Desktop() {
       {showPicker && <div data-widget-picker-dialog><WidgetPicker onAddWidget={addWidget} onClose={() => setShowPicker(false)} /></div>}
       {showQuestBar && <QuestBar onOpenApp={openApp} onOpenFile={openFile} onOpenFolder={openFolder} onClose={() => setShowQuestBar(false)} hiddenApps={hiddenApps} onAddToDock={toggleHideApp} />}
       {showDatePopup && <DateTimePopup onClose={() => setShowDatePopup(false)} />}
+      {showNotifCenter && <NotificationCenter notifications={notifications} onClose={() => setShowNotifCenter(false)} onClear={() => setNotifications([])} />}
+
+      {/* Active notification toast */}
+      {activeNotif && (
+        <div className="fixed top-10 right-4 z-[300] animate-in slide-in-from-top-2 fade-in" onClick={() => setActiveNotif(null)}>
+          <div className={`max-w-xs rounded-xl px-4 py-3 shadow-2xl backdrop-blur-2xl ${isDark ? "bg-[#2c2c2e]/95 text-white border border-white/10" : "bg-white/95 text-[#1c1c1e] border border-black/10"}`}>
+            <div className="text-xs font-semibold">{activeNotif.title}</div>
+            {activeNotif.body && <div className="text-xs opacity-70 mt-0.5">{activeNotif.body}</div>}
+          </div>
+        </div>
+      )}
+
       {locked && <LockScreen wallpaper={lockWallpaper} fit={wallpaperFit} settings={lockSettings} onUnlock={() => { sessionStorage.setItem("trivix_unlocked", "1"); setLocked(false); }} />}
     </div>
   );
