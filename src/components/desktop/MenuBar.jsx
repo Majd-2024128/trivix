@@ -1,7 +1,7 @@
-import { X, ArrowDown, Maximize2 } from "lucide-react";
+import { X, ArrowDown, Maximize2, Bell } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
 
-export default function MenuBar({ controls }) {
+export default function MenuBar({ controls, onNotifClick, notifCount = 0 }) {
   const { isDark } = useTheme();
   const displayName = controls?.appName === "Settings" ? "System" : controls?.appName;
   const labelColor = isDark ? "text-white/60" : "text-black/70";
@@ -10,7 +10,7 @@ export default function MenuBar({ controls }) {
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 h-7 flex items-center px-4 z-[200] select-none"
+      className="fixed top-0 left-0 right-0 h-7 flex items-center justify-between px-4 z-[200] select-none"
       style={{
         background: isDark ? "rgba(30, 40, 30, 0.65)" : "rgba(245, 245, 247, 0.75)",
         backdropFilter: "blur(30px)",
@@ -47,6 +47,16 @@ export default function MenuBar({ controls }) {
             </div>
           </>
         )}
+      </div>
+
+      {/* Right side: notification bell */}
+      <div className="flex items-center gap-2">
+        <button onClick={onNotifClick} className="relative flex items-center justify-center w-7 h-7 rounded-full hover:bg-white/10 transition-colors">
+          <Bell className={`w-3.5 h-3.5 ${isDark ? "text-white/70" : "text-black/60"}`} />
+          {notifCount > 0 && (
+            <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
+          )}
+        </button>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Pencil, Highlighter, PenTool, Eraser, PaintBucket, MousePointer, Type, Square, Circle, Triangle, Undo2, Redo2, Save, Minus } from "lucide-react";
+import { Pencil, Highlighter, PenTool, Eraser, PaintBucket, MousePointer, Type, Square, Circle, Triangle, Undo2, Redo2, Save, Minus, ZoomIn, ZoomOut } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 import { readFs, writeFs, getNode, uniqueName } from "@/lib/fileStore";
 
@@ -17,63 +17,68 @@ const SHAPES = ["rectangle", "circle", "triangle"];
 const COLORS = ["#000000", "#ffffff", "#ff0000", "#00aa00", "#0055ff", "#ff8800", "#aa00ff", "#00cccc", "#ff69b4", "#8b4513"];
 const SIZES = [2, 4, 8, 16];
 
-export default function CanvasApp({ onRequestSaveCheck }) {
+export default function CanvasApp({ importImage }) {
   const { isDark } = useTheme();
   const t = themed(isDark);
   const canvasRef = useRef(null);
+  const containerRef = useRef(null);
   const [tool, setTool] = useState("pen");
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(4);
   const [drawing, setDrawing] = useState(false);
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [objects, setObjects] = useState([]); // shapes & text
+  const [objects, setObjects] = useState([]);
   const [selectedObj, setSelectedObj] = useState(null);
   const [dragInfo, setDragInfo] = useState(null);
   const [resizeInfo, setResizeInfo] = useState(null);
   const [showShapes, setShowShapes] = useState(false);
   const [addingText, setAddingText] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const lastPoint = useRef(null);
+  const initDone = useRef(false);
 
   // Initialize canvas
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    if (!canvas || initDone.current) return;
+    initDone.current = true;
+    canvas.width = 1200;
+    canvas.height = 800;
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    saveState();
-  }, []);
 
-  // Handle resize
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const obs = new ResizeObserver(() => {
-      const imageData = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      canvas.getContext("2d").putImageData(imageData, 0, 0);
-    });
-    obs.observe(canvas);
-    return () => obs.disconnect();
-  }, []);
+    // Import image if provided
+    if (importImage?.dataUrl) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, Math.min(img.width, canvas.width), Math.min(img.height, canvas.height));
+        saveStateImmediate();
+      };
+      img.src = importImage.dataUrl;
+    } else {
+      saveStateImmediate();
+    }
+  }, [importImage]);
 
-  const saveState = useCallback(() => {
+  const saveStateImmediate = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const data = canvas.toDataURL();
     setHistory((prev) => {
-      const next = prev.slice(0, historyIndex + 1);
+      const next = [...prev];
       next.push(data);
       if (next.length > 50) next.shift();
       setHistoryIndex(next.length - 1);
       return next;
     });
-  }, [historyIndex]);
+  }, []);
+
+  const saveState = useCallback(() => {
+    saveStateImmediate();
+  }, [saveStateImmediate]);
 
   const restoreState = (index) => {
     const canvas = canvasRef.current;
@@ -103,22 +108,23 @@ export default function CanvasApp({ onRequestSaveCheck }) {
 
   const getPos = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    return { x: (e.clientX - rect.left) / zoom, y: (e.clientY - rect.top) / zoom };
   };
 
   const startDraw = (e) => {
     if (tool === "select") {
-      // Check if clicking on an object
       const pos = getPos(e);
       const clicked = [...objects].reverse().find((obj) => {
-        if (obj.type === "text") return pos.x >= obj.x && pos.x <= obj.x + (obj.width || 100) && pos.y >= obj.y - 20 && pos.y <= obj.y + 10;
+        if (obj.type === "text") {
+          const tw = obj.width || (obj.text.length * obj.fontSize * 0.6);
+          return pos.x >= obj.x && pos.x <= obj.x + tw && pos.y >= obj.y - obj.fontSize && pos.y <= obj.y + 5;
+        }
         return pos.x >= obj.x && pos.x <= obj.x + obj.w && pos.y >= obj.y && pos.y <= obj.y + obj.h;
       });
       if (clicked) {
         setSelectedObj(clicked.id);
-        // Check resize handle
-        if (clicked.type !== "text" && pos.x > clicked.x + clicked.w - 10 && pos.y > clicked.y + clicked.h - 10) {
-          setResizeInfo({ id: clicked.id, startX: pos.x, startY: pos.y, startW: clicked.w, startH: clicked.h });
+        if (clicked.type !== "text" && pos.x > clicked.x + clicked.w - 12 && pos.y > clicked.y + clicked.h - 12) {
+          setResizeInfo({ id: clicked.id, startX: e.clientX, startY: e.clientY, startW: clicked.w, startH: clicked.h });
         } else {
           setDragInfo({ id: clicked.id, offsetX: pos.x - clicked.x, offsetY: pos.y - clicked.y });
         }
@@ -136,7 +142,7 @@ export default function CanvasApp({ onRequestSaveCheck }) {
     if (addingText) {
       const pos = getPos(e);
       const id = Date.now();
-      setObjects((prev) => [...prev, { id, type: "text", x: pos.x, y: pos.y, text: "Text", color, fontSize: 20, editing: true }]);
+      setObjects((prev) => [...prev, { id, type: "text", x: pos.x, y: pos.y, text: "Text", color, fontSize: 20, editing: true, width: 120 }]);
       setSelectedObj(id);
       setAddingText(false);
       setTool("select");
@@ -186,10 +192,9 @@ export default function CanvasApp({ onRequestSaveCheck }) {
       return;
     }
     if (resizeInfo) {
-      const pos = getPos(e);
-      const dw = pos.x - resizeInfo.startX;
-      const dh = pos.y - resizeInfo.startY;
-      setObjects((prev) => prev.map((obj) => obj.id === resizeInfo.id ? { ...obj, w: Math.max(20, resizeInfo.startW + dw), h: Math.max(20, resizeInfo.startH + dh) } : obj));
+      const dx = (e.clientX - resizeInfo.startX) / zoom;
+      const dy = (e.clientY - resizeInfo.startY) / zoom;
+      setObjects((prev) => prev.map((obj) => obj.id === resizeInfo.id ? { ...obj, w: Math.max(20, resizeInfo.startW + dx), h: Math.max(20, resizeInfo.startH + dy) } : obj));
       return;
     }
     if (!drawing) return;
@@ -230,6 +235,7 @@ export default function CanvasApp({ onRequestSaveCheck }) {
     const pos = getPos(e);
     const x = Math.round(pos.x);
     const y = Math.round(pos.y);
+    if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) return;
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     const w = canvas.width;
@@ -238,7 +244,6 @@ export default function CanvasApp({ onRequestSaveCheck }) {
     const targetIdx = (y * w + x) * 4;
     const tr = data[targetIdx], tg = data[targetIdx + 1], tb = data[targetIdx + 2];
 
-    // Parse fill color
     const fillEl = document.createElement("canvas").getContext("2d");
     fillEl.fillStyle = color;
     fillEl.fillRect(0, 0, 1, 1);
@@ -281,42 +286,65 @@ export default function CanvasApp({ onRequestSaveCheck }) {
     setDirty(true);
   };
 
+  // Update color of selected object
+  useEffect(() => {
+    if (!selectedObj) return;
+    setObjects((prev) => prev.map((obj) => {
+      if (obj.id !== selectedObj) return obj;
+      if (obj.type === "text") return { ...obj, color };
+      return { ...obj, fill: color, color };
+    }));
+  }, [color, selectedObj]);
+
   const renderObjects = () => objects.map((obj) => {
     const isSelected = selectedObj === obj.id;
     if (obj.type === "text") {
       return (
-        <div key={obj.id} style={{ position: "absolute", left: obj.x, top: obj.y - 20, zIndex: 10, border: isSelected ? "1px dashed #0088ff" : "none", padding: 2, minWidth: 40 }}
-          onMouseDown={(e) => { e.stopPropagation(); setSelectedObj(obj.id); setTool("select"); setDragInfo({ id: obj.id, offsetX: e.nativeEvent.offsetX, offsetY: e.nativeEvent.offsetY }); }}>
+        <div key={obj.id} style={{ position: "absolute", left: obj.x * zoom, top: (obj.y - obj.fontSize) * zoom, zIndex: 10, border: isSelected ? "1px dashed #0088ff" : "none", padding: 2, minWidth: 40, transform: `scale(${zoom})`, transformOrigin: "top left" }}
+          onMouseDown={(e) => { e.stopPropagation(); setSelectedObj(obj.id); setTool("select"); setDragInfo({ id: obj.id, offsetX: (e.clientX - canvasRef.current.getBoundingClientRect().left) / zoom - obj.x, offsetY: (e.clientY - canvasRef.current.getBoundingClientRect().top) / zoom - obj.y }); }}>
           {obj.editing && isSelected ? (
             <input autoFocus value={obj.text} onChange={(e) => setObjects((prev) => prev.map((o) => o.id === obj.id ? { ...o, text: e.target.value } : o))}
               onBlur={() => setObjects((prev) => prev.map((o) => o.id === obj.id ? { ...o, editing: false } : o))}
-              onKeyDown={(e) => e.key === "Enter" && setObjects((prev) => prev.map((o) => o.id === obj.id ? { ...o, editing: false } : o))}
-              style={{ color: obj.color, fontSize: obj.fontSize, background: "transparent", outline: "none", border: "none", fontFamily: "Space Grotesk" }} />
+              onKeyDown={(e) => { if (e.key === "Enter") setObjects((prev) => prev.map((o) => o.id === obj.id ? { ...o, editing: false } : o)); e.stopPropagation(); }}
+              style={{ color: obj.color, fontSize: obj.fontSize, background: "transparent", outline: "none", border: "none", fontFamily: "Space Grotesk", minWidth: 60 }} />
           ) : (
             <span onDoubleClick={() => setObjects((prev) => prev.map((o) => o.id === obj.id ? { ...o, editing: true } : o))}
-              style={{ color: obj.color, fontSize: obj.fontSize, cursor: "move", userSelect: "none", fontFamily: "Space Grotesk" }}>{obj.text}</span>
+              style={{ color: obj.color, fontSize: obj.fontSize, cursor: "move", userSelect: "none", fontFamily: "Space Grotesk", display: "block" }}>{obj.text}</span>
+          )}
+          {isSelected && (
+            <div className="mt-1 flex gap-1">
+              <select value={obj.fontSize} onChange={(e) => setObjects((prev) => prev.map((o) => o.id === obj.id ? { ...o, fontSize: Number(e.target.value) } : o))}
+                className="text-[10px] bg-black/20 text-white rounded px-1" style={{ transform: `scale(${1 / zoom})`, transformOrigin: "top left" }}>
+                {[12, 16, 20, 28, 36, 48, 64].map((s) => <option key={s} value={s}>{s}px</option>)}
+              </select>
+            </div>
           )}
         </div>
       );
     }
 
-    const shapeStyle = { position: "absolute", left: obj.x, top: obj.y, width: obj.w, height: obj.h, zIndex: 10, border: isSelected ? "2px dashed #0088ff" : "none" };
+    const shapeStyle = { position: "absolute", left: obj.x * zoom, top: obj.y * zoom, width: obj.w * zoom, height: obj.h * zoom, zIndex: 10, border: isSelected ? "2px dashed #0088ff" : "none", cursor: "move" };
     return (
       <div key={obj.id} style={shapeStyle}
-        onMouseDown={(e) => { e.stopPropagation(); setSelectedObj(obj.id); setTool("select"); }}>
-        <svg width="100%" height="100%" viewBox={`0 0 ${obj.w} ${obj.h}`}>
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          setSelectedObj(obj.id);
+          setTool("select");
+          const pos = getPos(e);
+          setDragInfo({ id: obj.id, offsetX: pos.x - obj.x, offsetY: pos.y - obj.y });
+        }}>
+        <svg width="100%" height="100%" viewBox={`0 0 ${obj.w} ${obj.h}`} preserveAspectRatio="none">
           {obj.type === "rectangle" && <rect x="0" y="0" width={obj.w} height={obj.h} fill={obj.fill} />}
           {obj.type === "circle" && <ellipse cx={obj.w / 2} cy={obj.h / 2} rx={obj.w / 2} ry={obj.h / 2} fill={obj.fill} />}
           {obj.type === "triangle" && <polygon points={`${obj.w / 2},0 0,${obj.h} ${obj.w},${obj.h}`} fill={obj.fill} />}
         </svg>
-        {isSelected && <div style={{ position: "absolute", right: -4, bottom: -4, width: 8, height: 8, background: "#0088ff", cursor: "se-resize" }}
+        {isSelected && <div style={{ position: "absolute", right: -4, bottom: -4, width: 10, height: 10, background: "#0088ff", cursor: "se-resize", borderRadius: 2 }}
           onMouseDown={(e) => { e.stopPropagation(); setResizeInfo({ id: obj.id, startX: e.clientX, startY: e.clientY, startW: obj.w, startH: obj.h }); }} />}
       </div>
     );
   });
 
   const saveToDesktop = () => {
-    // Render objects onto canvas first
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     objects.forEach((obj) => {
@@ -344,7 +372,6 @@ export default function CanvasApp({ onRequestSaveCheck }) {
     setDirty(false);
   };
 
-  // Handle drop images onto canvas
   const handleDrop = (e) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
@@ -364,6 +391,13 @@ export default function CanvasApp({ onRequestSaveCheck }) {
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  // Scroll to zoom
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setZoom((z) => Math.max(0.25, Math.min(4, z + delta)));
   };
 
   // Keyboard
@@ -443,6 +477,15 @@ export default function CanvasApp({ onRequestSaveCheck }) {
             </button>
           ))}
         </div>
+        <div className={`w-px h-5 ${isDark ? "bg-white/15" : "bg-black/15"} mx-1`} />
+        {/* Zoom controls */}
+        <button onClick={() => setZoom((z) => Math.min(4, z + 0.25))} title="Zoom In" className={`p-1 rounded-lg ${isDark ? "hover:bg-white/10 text-white/70" : "hover:bg-black/10 text-black/70"}`}>
+          <ZoomIn className="w-3.5 h-3.5" />
+        </button>
+        <span className={`text-[10px] min-w-[32px] text-center ${isDark ? "text-white/50" : "text-black/50"}`}>{Math.round(zoom * 100)}%</span>
+        <button onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))} title="Zoom Out" className={`p-1 rounded-lg ${isDark ? "hover:bg-white/10 text-white/70" : "hover:bg-black/10 text-black/70"}`}>
+          <ZoomOut className="w-3.5 h-3.5" />
+        </button>
         <div className="flex-1" />
         {selectedObj && (
           <button onClick={deleteSelected} className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/20 text-xs">Delete</button>
@@ -453,12 +496,14 @@ export default function CanvasApp({ onRequestSaveCheck }) {
       </div>
 
       {/* Canvas area */}
-      <div className="flex-1 relative overflow-hidden bg-gray-100"
-        onDrop={handleDrop} onDragOver={(e) => e.preventDefault()}>
-        {renderObjects()}
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full"
-          style={{ cursor: tool === "select" ? "default" : tool === "bucket" ? "crosshair" : addingText ? "text" : "crosshair" }}
-          onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw} />
+      <div ref={containerRef} className="flex-1 relative overflow-auto" style={{ background: isDark ? "#333" : "#e0e0e0" }}
+        onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onWheel={handleWheel}>
+        <div className="relative" style={{ width: 1200 * zoom, height: 800 * zoom, margin: "auto" }}>
+          {renderObjects()}
+          <canvas ref={canvasRef} width={1200} height={800}
+            style={{ width: 1200 * zoom, height: 800 * zoom, cursor: tool === "select" ? "default" : tool === "bucket" ? "crosshair" : addingText ? "text" : "crosshair", display: "block" }}
+            onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw} />
+        </div>
       </div>
 
       <div className={`px-4 py-1.5 border-t ${t.border} text-center`}>

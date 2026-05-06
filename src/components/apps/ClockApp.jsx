@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Clock, Timer, Hourglass, Bell, Play, Pause, RotateCcw, Plus, Trash2 } from "lucide-react";
+import { Clock, Timer, Hourglass, Bell, Play, Pause, RotateCcw, Plus, Trash2, Search, X } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 
 const TABS = [
@@ -7,6 +7,34 @@ const TABS = [
   { id: "stopwatch", label: "Stopwatch", icon: Hourglass },
   { id: "timer", label: "Timer", icon: Timer },
   { id: "alarm", label: "Alarm", icon: Bell },
+];
+
+const CITY_DATABASE = [
+  { city: "London", tz: "Europe/London" },
+  { city: "New York", tz: "America/New_York" },
+  { city: "Tokyo", tz: "Asia/Tokyo" },
+  { city: "Paris", tz: "Europe/Paris" },
+  { city: "Dubai", tz: "Asia/Dubai" },
+  { city: "Sydney", tz: "Australia/Sydney" },
+  { city: "Los Angeles", tz: "America/Los_Angeles" },
+  { city: "Chicago", tz: "America/Chicago" },
+  { city: "Berlin", tz: "Europe/Berlin" },
+  { city: "Moscow", tz: "Europe/Moscow" },
+  { city: "Beijing", tz: "Asia/Shanghai" },
+  { city: "Mumbai", tz: "Asia/Kolkata" },
+  { city: "São Paulo", tz: "America/Sao_Paulo" },
+  { city: "Cairo", tz: "Africa/Cairo" },
+  { city: "Istanbul", tz: "Europe/Istanbul" },
+  { city: "Seoul", tz: "Asia/Seoul" },
+  { city: "Singapore", tz: "Asia/Singapore" },
+  { city: "Hong Kong", tz: "Asia/Hong_Kong" },
+  { city: "Toronto", tz: "America/Toronto" },
+  { city: "Riyadh", tz: "Asia/Riyadh" },
+  { city: "Bangkok", tz: "Asia/Bangkok" },
+  { city: "Rome", tz: "Europe/Rome" },
+  { city: "Madrid", tz: "Europe/Madrid" },
+  { city: "Amsterdam", tz: "Europe/Amsterdam" },
+  { city: "Doha", tz: "Asia/Qatar" },
 ];
 
 function AnalogClock({ time, isDark }) {
@@ -49,10 +77,32 @@ function AnalogClock({ time, isDark }) {
 
 function ClockTab({ isDark, t }) {
   const [time, setTime] = useState(new Date());
+  const [cities, setCities] = useState(() => {
+    try { const s = localStorage.getItem("trivix_clock_cities"); return s ? JSON.parse(s) : []; } catch { return []; }
+  });
+  const [search, setSearch] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+
   useEffect(() => {
     const iv = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(iv);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("trivix_clock_cities", JSON.stringify(cities));
+  }, [cities]);
+
+  const filtered = search.trim() ? CITY_DATABASE.filter((c) => c.city.toLowerCase().includes(search.toLowerCase()) && !cities.some((p) => p.tz === c.tz)) : [];
+
+  const addCity = (city) => {
+    if (cities.length >= 5) return;
+    setCities((prev) => [...prev, city]);
+    setSearch("");
+    setShowSearch(false);
+  };
+
+  const removeCity = (tz) => setCities((prev) => prev.filter((c) => c.tz !== tz));
+
   return (
     <div className="flex flex-col items-center justify-center flex-1 p-4">
       <AnalogClock time={time} isDark={isDark} />
@@ -62,15 +112,51 @@ function ClockTab({ isDark, t }) {
       <div className={`${t.textSubtle} text-sm mb-6`}>
         {time.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
       </div>
-      <div className="w-full max-w-xs space-y-1.5">
-        {[{ city: "London", tz: "Europe/London" }, { city: "New York", tz: "America/New_York" }, { city: "Tokyo", tz: "Asia/Tokyo" }].map(({ city, tz }) => (
-          <div key={city} className={`flex justify-between items-center px-3 py-1.5 rounded-lg ${isDark ? "bg-white/5" : "bg-black/5"}`}>
-            <span className={`${t.textSubtle} text-xs`}>{city}</span>
-            <span className={`${t.textMuted} text-xs font-medium`}>
-              {time.toLocaleTimeString("en-US", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: true })}
-            </span>
+      <div className="w-full max-w-xs">
+        <div className="flex items-center justify-between mb-2">
+          <span className={`text-xs ${t.textSubtle}`}>World Clocks ({cities.length}/5)</span>
+          {cities.length < 5 && (
+            <button onClick={() => setShowSearch(!showSearch)} className={`p-1 rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}>
+              {showSearch ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+            </button>
+          )}
+        </div>
+        {showSearch && (
+          <div className="mb-2 relative">
+            <Search className={`absolute left-2.5 top-2 w-3.5 h-3.5 ${isDark ? "text-white/40" : "text-black/40"}`} />
+            <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search city..."
+              className={`w-full rounded-lg pl-8 pr-3 py-1.5 text-xs outline-none ${isDark ? "bg-white/10 text-white placeholder:text-white/40" : "bg-black/5 text-black placeholder:text-black/40"}`} />
+            {filtered.length > 0 && (
+              <div className={`absolute left-0 right-0 top-full mt-1 z-10 rounded-lg overflow-hidden shadow-xl max-h-32 overflow-y-auto ${isDark ? "bg-[#2c2c2e] border border-white/10" : "bg-white border border-black/10"}`}>
+                {filtered.slice(0, 8).map((c) => (
+                  <button key={c.tz} onClick={() => addCity(c)} className={`w-full text-left px-3 py-1.5 text-xs ${isDark ? "hover:bg-white/10 text-white/80" : "hover:bg-black/5 text-black/80"}`}>
+                    {c.city}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        ))}
+        )}
+        <div className="space-y-1.5">
+          {cities.map(({ city, tz }) => (
+            <div key={tz} className={`flex justify-between items-center px-3 py-1.5 rounded-lg ${isDark ? "bg-white/5" : "bg-black/5"} group`}>
+              <span className={`${t.textSubtle} text-xs`}>{city}</span>
+              <div className="flex items-center gap-2">
+                <span className={`${t.textMuted} text-xs font-medium`}>
+                  {time.toLocaleTimeString("en-US", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: true })}
+                </span>
+                <button onClick={() => removeCity(tz)} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <X className={`w-3 h-3 ${isDark ? "text-white/40" : "text-black/40"}`} />
+                </button>
+              </div>
+            </div>
+          ))}
+          {cities.length === 0 && !showSearch && (
+            <div className={`text-center text-xs py-4 ${isDark ? "text-white/25" : "text-black/30"}`}>
+              Add cities to see their time
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -90,11 +176,6 @@ function StopwatchTab({ isDark }) {
     } else clearInterval(intervalRef.current);
     return () => clearInterval(intervalRef.current);
   }, [running]);
-
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent("trivix-activity", { detail: { id: "stopwatch", active: running, label: "Stopwatch", value: fmt(elapsed) } }));
-    return () => window.dispatchEvent(new CustomEvent("trivix-activity", { detail: { id: "stopwatch", active: false } }));
-  }, [running, elapsed]);
 
   const fmt = (ms) => {
     const m = Math.floor(ms / 60000);
@@ -133,7 +214,7 @@ function StopwatchTab({ isDark }) {
   );
 }
 
-function TimerTab({ isDark }) {
+function TimerTab({ isDark, onNotify }) {
   const [totalSec, setTotalSec] = useState(300);
   const [remaining, setRemaining] = useState(300);
   const [running, setRunning] = useState(false);
@@ -144,16 +225,18 @@ function TimerTab({ isDark }) {
   useEffect(() => {
     if (running && remaining > 0) {
       intervalRef.current = setInterval(() => {
-        setRemaining((r) => { if (r <= 1) { setRunning(false); return 0; } return r - 1; });
+        setRemaining((r) => {
+          if (r <= 1) {
+            setRunning(false);
+            onNotify?.({ title: "Timer", body: "Time's up!" });
+            return 0;
+          }
+          return r - 1;
+        });
       }, 1000);
     } else clearInterval(intervalRef.current);
     return () => clearInterval(intervalRef.current);
-  }, [running, remaining]);
-
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent("trivix-activity", { detail: { id: "timer", active: running && remaining > 0, label: "Timer", value: fmt(remaining) } }));
-    return () => window.dispatchEvent(new CustomEvent("trivix-activity", { detail: { id: "timer", active: false } }));
-  }, [running, remaining]);
+  }, [running, remaining, onNotify]);
 
   const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
   const commitEdit = () => {
@@ -197,12 +280,26 @@ function TimerTab({ isDark }) {
   );
 }
 
-function AlarmTab({ isDark }) {
+function AlarmTab({ isDark, onNotify }) {
   const [alarms, setAlarms] = useState([]);
   const toggle = (id) => setAlarms(alarms.map((a) => a.id === id ? { ...a, enabled: !a.enabled } : a));
   const remove = (id) => setAlarms(alarms.filter((a) => a.id !== id));
   const addAlarm = () => setAlarms([...alarms, { id: Date.now(), time: "12:00", label: "Alarm", enabled: true }]);
   const updateAlarm = (id, field, value) => setAlarms(alarms.map((a) => a.id === id ? { ...a, [field]: value } : a));
+
+  // Check alarms
+  useEffect(() => {
+    const iv = setInterval(() => {
+      const now = new Date();
+      const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      alarms.forEach((a) => {
+        if (a.enabled && a.time === hhmm && now.getSeconds() === 0) {
+          onNotify?.({ title: "Alarm", body: a.label });
+        }
+      });
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [alarms, onNotify]);
 
   return (
     <div className="flex flex-col flex-1 p-4">
@@ -235,7 +332,7 @@ function AlarmTab({ isDark }) {
   );
 }
 
-export default function ClockApp() {
+export default function ClockApp({ onNotify }) {
   const [tab, setTab] = useState("clock");
   const { isDark } = useTheme();
   const t = themed(isDark);
@@ -245,8 +342,8 @@ export default function ClockApp() {
       <div className="flex-1 overflow-y-auto">
         {tab === "clock" && <ClockTab isDark={isDark} t={t} />}
         {tab === "stopwatch" && <StopwatchTab isDark={isDark} />}
-        {tab === "timer" && <TimerTab isDark={isDark} />}
-        {tab === "alarm" && <AlarmTab isDark={isDark} />}
+        {tab === "timer" && <TimerTab isDark={isDark} onNotify={onNotify} />}
+        {tab === "alarm" && <AlarmTab isDark={isDark} onNotify={onNotify} />}
       </div>
       <div className={`flex border-t ${t.border} ${isDark ? "bg-black/30" : "bg-black/5"}`}>
         {TABS.map(({ id, label, icon: Icon }) => (
