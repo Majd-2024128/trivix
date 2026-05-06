@@ -47,7 +47,6 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    --cursor-size: 32px;
   }
 
   .dark {
@@ -99,18 +98,5 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-space);
-    cursor: url('./assets/cursor-pointer.png') 2 2, auto;
-  }
-
-  button, a, [role="button"] {
-    cursor: url('./assets/cursor-hand.png') 12 2, pointer;
-  }
-
-  input, textarea, [contenteditable="true"] {
-    cursor: url('./assets/cursor-text.png') 16 16, text;
-  }
-
-  [draggable="true"], .cursor-grab, .cursor-move {
-    cursor: url('./assets/cursor-move.png') 16 16, move;
   }
 }
