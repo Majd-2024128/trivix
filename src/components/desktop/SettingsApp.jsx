@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Sun, Monitor, Info, Layout, RotateCcw, Lock, MousePointer2, Globe } from "lucide-react";
+import { Sun, Monitor, Info, Layout, RotateCcw, Lock, Globe } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 import { WALLPAPERS, gradientForTheme } from "@/lib/wallpapers";
 import { Upload } from "lucide-react";
@@ -9,7 +9,6 @@ const SECTIONS = [
   { id: "display", label: "Display", Icon: Monitor },
   { id: "desktop-dock", label: "Desktop & Dock", Icon: Layout },
   { id: "lock", label: "Lock Screen", Icon: Lock },
-  { id: "mouse", label: "Mouse", Icon: MousePointer2 },
   { id: "language", label: "Language", Icon: Globe },
   { id: "about", label: "About", Icon: Info },
 ];
@@ -18,7 +17,6 @@ export default function SettingsApp({
   onSelectWallpaper, onUploadWallpaper, currentWallpaperId, isCustomWallpaper,
   brightness, onBrightnessChange, dockAutoHide, onDockAutoHideChange, onReset,
   wallpaperFit = "cover", onWallpaperFitChange, lockSettings = {}, onLockSettingsChange,
-  cursorSize = 32, onCursorSizeChange, cursorBlink = 530, onCursorBlinkChange,
   sameWallpaper = true, onSameWallpaperChange,
 }) {
   const [section, setSection] = useState("display");
@@ -74,8 +72,6 @@ export default function SettingsApp({
         {section === "display" && (
           <div className="p-6 space-y-4">
             <h2 className="text-base font-semibold mb-4">Display</h2>
-
-            {/* Wallpaper grid */}
             <div className="grid grid-cols-3 gap-2">
               {WALLPAPERS.map((wp) => {
                 const preview = gradientForTheme(wp, isDark);
@@ -107,7 +103,6 @@ export default function SettingsApp({
               </div>
             </div>
 
-            {/* Brightness */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Sun className="w-4 h-4 text-yellow-400" />
@@ -117,7 +112,6 @@ export default function SettingsApp({
               <input type="range" min={20} max={100} value={brightness} onChange={(e) => onBrightnessChange(Number(e.target.value))} className="w-full accent-yellow-400 cursor-pointer" />
             </div>
 
-            {/* Dark mode */}
             <div className="rounded-xl px-4 py-3" style={{ background: cardBg }}>
               <div className="flex items-center justify-between">
                 <div>
@@ -163,7 +157,6 @@ export default function SettingsApp({
               </div>
             </div>
 
-            {/* Same wallpaper toggle */}
             <div className="rounded-xl px-4 py-3" style={{ background: cardBg }}>
               <div className="flex items-center justify-between">
                 <div>
@@ -195,28 +188,6 @@ export default function SettingsApp({
 
               <label className="block text-sm font-medium">Password</label>
               <input type="password" value={lockSettings.password || ""} onChange={(e) => onLockSettingsChange?.({ ...lockSettings, password: e.target.value })} placeholder="Optional" className={`w-full rounded-lg px-3 py-2 text-sm outline-none ${t.inputBg}`} />
-            </div>
-          </div>
-        )}
-
-        {section === "mouse" && (
-          <div className="p-6 space-y-6">
-            <h2 className="text-base font-semibold mb-4">Mouse</h2>
-            <div className="rounded-xl px-4 py-3 space-y-4" style={{ background: cardBg }}>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Cursor Size</span>
-                  <span className={`text-sm ${t.textSubtle}`}>{cursorSize}px</span>
-                </div>
-                <input type="range" min={16} max={64} value={cursorSize} onChange={(e) => onCursorSizeChange?.(Number(e.target.value))} className="w-full accent-cyan-400" />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Cursor Blink Speed</span>
-                  <span className={`text-sm ${t.textSubtle}`}>{cursorBlink}ms</span>
-                </div>
-                <input type="range" min={200} max={1200} step={50} value={cursorBlink} onChange={(e) => onCursorBlinkChange?.(Number(e.target.value))} className="w-full accent-cyan-400" />
-              </div>
             </div>
           </div>
         )}
