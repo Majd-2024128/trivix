@@ -29,6 +29,18 @@ export default function SettingsApp({
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const MAX_BYTES = 5 * 1024 * 1024;
+    if (!ALLOWED.includes(file.type)) {
+      alert("Please choose a JPEG, PNG, WebP, or GIF image.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      alert("Image is too large. Maximum size is 5 MB.");
+      e.target.value = "";
+      return;
+    }
     setUploading(true);
     const reader = new FileReader();
     reader.onload = (ev) => {
