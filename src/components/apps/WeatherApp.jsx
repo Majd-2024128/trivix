@@ -41,14 +41,11 @@ export default function WeatherApp() {
   const fetchWeather = async (q) => {
     setLoading(true); setError(null);
     try {
-      const [wRes, fRes] = await Promise.all([
-        supabase.functions.invoke("weather", { method: "GET", body: undefined, headers: {}, // body unused for GET
-        }),
-        supabase.functions.invoke("weather", { method: "GET" }),
-      ]);
-      // supabase.functions.invoke doesn't support query strings cleanly across versions; use fetch with the function URL directly.
       const base = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/weather`;
-      const headers = { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` };
+      const headers = {
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      };
       const [w, f] = await Promise.all([
         fetch(`${base}?endpoint=weather&q=${encodeURIComponent(q)}`, { headers }),
         fetch(`${base}?endpoint=forecast&q=${encodeURIComponent(q)}`, { headers }),
@@ -60,6 +57,7 @@ export default function WeatherApp() {
     } catch (e) { setError(e.message); setWeather(null); setForecast(null); }
     setLoading(false);
   };
+
 
 
   const handleSearch = (e) => {
