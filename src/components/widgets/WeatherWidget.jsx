@@ -3,7 +3,11 @@ import { useTheme } from "@/lib/ThemeContext";
 import { useWeatherCity } from "@/lib/weatherStore";
 import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudDrizzle, Loader2 } from "lucide-react";
 
-const API_KEY = "e340ed175acb50d6875920e74c14558a";
+const WEATHER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/weather`;
+const WEATHER_HEADERS = {
+  apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+};
 const iconMap = {
   "01d": "sun", "01n": "sun", "02d": "cloud-sun", "02n": "cloud-sun",
   "03d": "cloud", "03n": "cloud", "04d": "cloud", "04n": "cloud",
@@ -32,7 +36,7 @@ export default function WeatherWidget() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`)
+    fetch(`${WEATHER_URL}?endpoint=weather&q=${encodeURIComponent(city)}`, { headers: WEATHER_HEADERS })
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((d) => { if (!cancelled) { setData(d); setLoading(false); } })
       .catch(() => { if (!cancelled) setLoading(false); });

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Cloud, Sun, CloudRain, CloudSnow, Wind, Droplets, Eye, Thermometer, CloudLightning, CloudDrizzle, Loader2, Search, Star, X, MapPin } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
 
-const API_KEY = "e340ed175acb50d6875920e74c14558a";
+
 
 const iconMap = {
   "01d": "sun", "01n": "sun", "02d": "cloud-sun", "02n": "cloud-sun",
@@ -41,17 +41,24 @@ export default function WeatherApp() {
   const fetchWeather = async (q) => {
     setLoading(true); setError(null);
     try {
-      const [wRes, fRes] = await Promise.all([
-        fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(q)}&appid=${API_KEY}&units=metric`),
-        fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(q)}&appid=${API_KEY}&units=metric`),
+      const base = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/weather`;
+      const headers = {
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      };
+      const [w, f] = await Promise.all([
+        fetch(`${base}?endpoint=weather&q=${encodeURIComponent(q)}`, { headers }),
+        fetch(`${base}?endpoint=forecast&q=${encodeURIComponent(q)}`, { headers }),
       ]);
-      if (!wRes.ok) throw new Error("City not found");
-      const wData = await wRes.json();
-      const fData = await fRes.json();
+      if (!w.ok) throw new Error("City not found");
+      const wData = await w.json();
+      const fData = await f.json();
       setWeather(wData); setForecast(fData);
     } catch (e) { setError(e.message); setWeather(null); setForecast(null); }
     setLoading(false);
   };
+
+
 
   const handleSearch = (e) => {
     if (e.key === "Enter" && searchQuery.trim()) {
