@@ -144,7 +144,8 @@ export default function QuestApp({ onRequestClose, onDragStart }) {
       >
         {tabs.map((tb) => (
           <div key={tb.id} data-tab onClick={() => setActiveId(tb.id)}
-            className={`group flex items-center gap-1.5 px-2.5 py-1.5 rounded-t-lg text-[11px] cursor-pointer transition-colors shrink min-w-0 max-w-[160px] ${tb.id === activeId ? tabActive : tabInactive}`}>
+            onDoubleClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent("trivix-toggle-maximize")); }}
+            className={`group flex items-center gap-1.5 px-2.5 py-1.5 rounded-t-lg text-[11px] cursor-pointer transition-colors flex-1 min-w-0 max-w-[160px] ${tb.id === activeId ? tabActive : tabInactive}`}>
             <Globe className="w-3 h-3 shrink-0 opacity-60" />
             <span className="truncate flex-1">{tb.title || "New Tab"}</span>
             <button onClick={(e) => { e.stopPropagation(); closeTab(tb.id); }} className="opacity-40 hover:opacity-100 transition-opacity shrink-0">
@@ -214,9 +215,6 @@ export default function QuestApp({ onRequestClose, onDragStart }) {
         )}
       </div>
 
-      <div className={`px-3 py-1.5 border-t ${t.border} ${isDark ? "bg-[#101012]" : "bg-[#e5e5ea]"} text-center`}>
-        <p className={`${t.textFaint} text-[10px] font-space`}>Copyright © 2026 Tejt</p>
-      </div>
 
       {showExtPopup && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm">

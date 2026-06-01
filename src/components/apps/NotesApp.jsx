@@ -35,7 +35,7 @@ export default function NotesApp() {
   const activeNote = notes.find((n) => n.id === activeId);
 
   const handleAdd = () => {
-    const created = addNote({ title: "New Note", body: "", html: "" });
+    const created = addNote({ title: "", body: "", html: "" });
     setActiveId(created.id);
   };
 
@@ -225,9 +225,7 @@ export default function NotesApp() {
                   <div className="w-4 h-4 rounded-sm border border-current/20" style={{ background: c }} />
                 </button>
               ))}
-              <button onClick={() => execCmd("hiliteColor", "transparent")} className={`p-1 rounded ${isDark ? "hover:bg-white/10" : "hover:bg-black/10"}`} title="Remove highlight">
-                <Highlighter className="w-3.5 h-3.5 opacity-40" />
-              </button>
+              <div className={`w-px h-4 ${isDark ? "bg-white/15" : "bg-black/15"} mx-1`} />
               <div className={`w-px h-4 ${isDark ? "bg-white/15" : "bg-black/15"} mx-1`} />
               {/* Font size */}
               <select onChange={(e) => execCmd("fontSize", e.target.value)} className={`text-xs rounded px-1 py-0.5 ${isDark ? "bg-white/10 text-white" : "bg-black/5 text-black"} outline-none`}>

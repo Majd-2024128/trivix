@@ -39,6 +39,12 @@ export default function LockScreen({ wallpaper, fit = "cover", settings = {}, on
     return () => window.removeEventListener("keydown", key);
   }, [hasPassword, onUnlock, password, settings.password]);
 
+  const handleScreenClick = (e) => {
+    // Don't unlock when clicking inside password input
+    if (e.target.tagName === "INPUT") return;
+    if (!hasPassword) onUnlock?.();
+  };
+
   const clockSize = settings.size || 92;
   const style = settings.style || "bold";
 
@@ -55,7 +61,7 @@ export default function LockScreen({ wallpaper, fit = "cover", settings = {}, on
   };
 
   return (
-    <div className="fixed inset-0 z-[999] overflow-hidden font-space text-white" style={{ backgroundImage: wallpaper, backgroundSize: fit, backgroundRepeat: "no-repeat", backgroundPosition: "center", backgroundColor: "#030814" }}>
+    <div onMouseDown={handleScreenClick} className="fixed inset-0 z-[999] overflow-hidden font-space text-white cursor-pointer" style={{ backgroundImage: wallpaper, backgroundSize: fit, backgroundRepeat: "no-repeat", backgroundPosition: "center", backgroundColor: "#030814" }}>
       <div className="absolute inset-0 bg-black/25" />
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
         {/* Battery at top */}
