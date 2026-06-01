@@ -39,6 +39,12 @@ export default function LockScreen({ wallpaper, fit = "cover", settings = {}, on
     return () => window.removeEventListener("keydown", key);
   }, [hasPassword, onUnlock, password, settings.password]);
 
+  const handleScreenClick = (e) => {
+    // Don't unlock when clicking inside password input
+    if (e.target.tagName === "INPUT") return;
+    if (!hasPassword) onUnlock?.();
+  };
+
   const clockSize = settings.size || 92;
   const style = settings.style || "bold";
 
