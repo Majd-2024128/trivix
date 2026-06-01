@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Cloud, Sun, CloudRain, CloudSnow, Wind, Droplets, Eye, Thermometer, CloudLightning, CloudDrizzle, Loader2, Search, Star, X, MapPin } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
+import { supabase } from "@/integrations/supabase/client";
 
-const API_KEY = "e340ed175acb50d6875920e74c14558a";
 
 const iconMap = {
   "01d": "sun", "01n": "sun", "02d": "cloud-sun", "02n": "cloud-sun",
