@@ -36,7 +36,7 @@ export default function WeatherWidget() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`)
+    fetch(`${WEATHER_URL}?endpoint=weather&q=${encodeURIComponent(city)}`, { headers: WEATHER_HEADERS })
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((d) => { if (!cancelled) { setData(d); setLoading(false); } })
       .catch(() => { if (!cancelled) setLoading(false); });
