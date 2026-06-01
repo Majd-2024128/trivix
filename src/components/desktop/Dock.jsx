@@ -34,12 +34,13 @@ export const APP_DEFS = [
   { id: "chess", name: "Chess", iconDark: chessIconDark, iconLight: chessIconLight },
   { id: "files", name: "Files", iconDark: filesIconDark, iconLight: filesIconLight },
   { id: "canvas", name: "Canvas", iconDark: canvasIconDark, iconLight: canvasIconLight },
-  { id: "tips", name: "Tips", iconDark: tipsIconDark, iconLight: tipsIconLight },
+  // Tips: searchable in Quest Bar but intentionally NOT in dock
+  { id: "tips", name: "Tips", iconDark: tipsIconDark, iconLight: tipsIconLight, hiddenFromDock: true },
 ];
 
 export const APPS = APP_DEFS.map((a) => ({ id: a.id, name: a.name, icon: a.iconDark }));
 
-const DEFAULT_ORDER = APP_DEFS.map((a) => a.id);
+const DEFAULT_ORDER = APP_DEFS.filter((a) => !a.hiddenFromDock).map((a) => a.id);
 
 export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hiddenApps = [], onToggleHideApp, onPinApp, onDropAppToDesktop, dockHidden = false }) {
   const { isDark } = useTheme();
@@ -47,8 +48,7 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
     try {
       const s = localStorage.getItem("trivix_dock_order");
       let parsed = s ? JSON.parse(s) : DEFAULT_ORDER;
-      // Replace old editors with canvas
-      parsed = parsed.map((id) => id === "editors" ? "canvas" : id);
+      parsed = parsed.map((id) => id === "editors" ? "canvas" : id).filter((id) => id !== "tips" && id !== "editors");
       return parsed;
     } catch { return DEFAULT_ORDER; }
   });
@@ -57,8 +57,7 @@ export default function Dock({ onOpenApp, openApps, onCloseApp, autoHide, hidden
   useEffect(() => {
     const missing = DEFAULT_ORDER.filter((id) => !order.includes(id));
     if (missing.length > 0) setOrder((prev) => [...prev, ...missing]);
-    // Remove old editors
-    setOrder((prev) => prev.filter((id) => id !== "editors"));
+    setOrder((prev) => prev.filter((id) => id !== "editors" && id !== "tips"));
   }, []);
 
   useEffect(() => { localStorage.setItem("trivix_dock_order", JSON.stringify(order)); }, [order]);
