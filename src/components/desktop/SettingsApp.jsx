@@ -224,7 +224,8 @@ export default function SettingsApp({
           <div className="p-6 flex flex-col items-center justify-center h-full">
             <h2 className="text-xl font-bold mb-2">Trivix OS</h2>
             <p className={`text-sm ${t.textMuted} mb-1`}>Version 1.0</p>
-            <p className={`text-[10px] ${t.textFaint}`}>Copyright © 2026 Tejt</p>
+            <p className={`text-[10px] ${t.textFaint} mb-3`}>Copyright © 2026 Tejt</p>
+            <p className={`text-[9px] ${t.textFaint} opacity-60`}>Majd Mahayni</p>
           </div>
         )}
       </div>
