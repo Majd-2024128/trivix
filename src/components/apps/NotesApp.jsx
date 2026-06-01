@@ -35,7 +35,7 @@ export default function NotesApp() {
   const activeNote = notes.find((n) => n.id === activeId);
 
   const handleAdd = () => {
-    const created = addNote({ title: "New Note", body: "", html: "" });
+    const created = addNote({ title: "", body: "", html: "" });
     setActiveId(created.id);
   };
 
