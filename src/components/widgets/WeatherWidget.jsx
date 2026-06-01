@@ -3,7 +3,11 @@ import { useTheme } from "@/lib/ThemeContext";
 import { useWeatherCity } from "@/lib/weatherStore";
 import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudDrizzle, Loader2 } from "lucide-react";
 
-const API_KEY = "e340ed175acb50d6875920e74c14558a";
+const WEATHER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/weather`;
+const WEATHER_HEADERS = {
+  apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+};
 const iconMap = {
   "01d": "sun", "01n": "sun", "02d": "cloud-sun", "02n": "cloud-sun",
   "03d": "cloud", "03n": "cloud", "04d": "cloud", "04n": "cloud",
