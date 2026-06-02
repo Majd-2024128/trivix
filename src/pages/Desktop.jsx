@@ -11,6 +11,8 @@ import FilesApp from "../components/apps/FilesApp";
 import CanvasApp from "../components/apps/CanvasApp";
 import TipsApp from "../components/apps/TipsApp";
 import GlimpseApp from "../components/apps/GlimpseApp";
+import MediaApp from "../components/apps/MediaApp";
+import AppSwitcher from "../components/desktop/AppSwitcher";
 import Dock, { APP_DEFS } from "../components/desktop/Dock";
 import DesktopWindow from "../components/desktop/DesktopWindow";
 import SystemBar from "../components/desktop/SystemBar";
@@ -41,10 +43,16 @@ const APP_COMPONENTS = {
   canvas: CanvasApp,
   tips: TipsApp,
   glimpse: GlimpseApp,
+  media: MediaApp,
 };
 
 const SETTINGS_APP = { id: "settings", name: "System", isSettings: true };
 const GLIMPSE_APP = { id: "glimpse", name: "Glimpse" };
+const MEDIA_APP = { id: "media", name: "Media" };
+
+const isAudioVideo = (entry, name = "") =>
+  entry?.type?.startsWith("audio/") || entry?.type?.startsWith("video/") ||
+  /\.(mp3|wav|ogg|m4a|aac|flac|mp4|webm|mov|mkv|avi)$/i.test(name || entry?.name || "");
 
 function usePersistedState(key, defaultVal) {
   const [val, setVal] = useState(() => {
@@ -190,12 +198,13 @@ export default function Desktop() {
     setNextZ((z) => z + 1); setFocusedAppId(app.id);
   }, [windows, nextZ, minimizedApps]);
 
-  // Open TXT files in Notes instead of Glimpse
+  // Open TXT files in Notes; audio/video in Media; otherwise Glimpse
   const openFile = useCallback((file, name) => {
     const ext = fileExt(name || file?.name || "").toLowerCase();
     if (ext === "txt" && file?.dataUrl) {
-      // Open in Notes with the text content
       openApp(APP_DEFS.find((a) => a.id === "notes") || { id: "notes", name: "Notes" }, { importedText: file.dataUrl, importedName: name });
+    } else if (isAudioVideo(file, name)) {
+      openApp(MEDIA_APP, { file, name });
     } else {
       openApp(GLIMPSE_APP, { file, name });
     }
