@@ -158,15 +158,25 @@ export default function SystemBar({ onDateClick, dockHidden = false }) {
         boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
       };
 
+  const [showBatt, setShowBatt] = useState(false);
+  useEffect(() => {
+    if (!showBatt) return;
+    const dismiss = (e) => { if (!e.target.closest?.("[data-batt-popup]")) setShowBatt(false); };
+    const t = setTimeout(() => window.addEventListener("mousedown", dismiss), 0);
+    return () => { clearTimeout(t); window.removeEventListener("mousedown", dismiss); };
+  }, [showBatt]);
+
+  const battColor = charging ? "from-green-400 to-green-600" : battery > 60 ? "from-green-400 to-emerald-500" : battery > 20 ? "from-yellow-400 to-orange-500" : "from-red-500 to-red-600";
+
   return (
     <div ref={ref} className="fixed bottom-3 right-3 z-50" style={{ transform: dockHidden ? "translateY(120px)" : "translateY(0)", opacity: dockHidden ? 0 : 1, transition: "transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.25s" }}>
       <div className="px-4 py-2 rounded-[20px] flex flex-row items-center gap-3" style={containerStyle}>
-        <div className="flex items-center gap-1.5">
+        <button onClick={() => setShowBatt((v) => !v)} className="flex items-center gap-1.5 rounded-md hover:bg-white/10 px-1 py-0.5 transition">
           {getBatteryIcon()}
           <span className={`text-xs font-space font-medium ${textPrimary}`}>
             {battery !== null ? `${battery}%` : "—"}
           </span>
-        </div>
+        </button>
 
         <div className={`w-px h-4 ${dividerCls}`} />
 
@@ -175,6 +185,20 @@ export default function SystemBar({ onDateClick, dockHidden = false }) {
           <span className={`${textSecondary} text-xs font-space mt-0.5`}>{formattedDate}</span>
         </button>
       </div>
+
+      {showBatt && (
+        <div data-batt-popup className="absolute bottom-full right-0 mb-2 w-64 rounded-2xl p-4 shadow-2xl font-space" style={containerStyle}>
+          <div className="flex items-center justify-between mb-2">
+            <span className={`text-xs font-semibold ${textPrimary}`}>Battery</span>
+            {charging && <BatteryCharging className="w-4 h-4 text-green-400" />}
+          </div>
+          <div className={`text-2xl font-bold ${textPrimary}`}>{battery !== null ? `${battery}%` : "—"}</div>
+          <div className={`mt-3 h-3 w-full rounded-full overflow-hidden ${light ? "bg-black/10" : "bg-white/10"}`}>
+            <div className={`h-full rounded-full bg-gradient-to-r ${battColor} transition-all`} style={{ width: `${battery ?? 0}%` }} />
+          </div>
+          <div className={`mt-2 text-[11px] ${textSecondary}`}>{charging ? "Charging" : battery > 20 ? "On battery" : "Low battery"}</div>
+        </div>
+      )}
     </div>
   );
 }
