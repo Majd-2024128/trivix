@@ -425,6 +425,8 @@ export default function Desktop() {
         </div>
       )}
 
+      <AppSwitcher openApps={openAppIds.filter((id) => !minimizedApps.has(id))} focusedAppId={focusedAppId} visible={switcherVisible} />
+
       {locked && <LockScreen wallpaper={lockWallpaper} fit={wallpaperFit} settings={lockSettings} onUnlock={() => { sessionStorage.setItem("trivix_unlocked", "1"); setLocked(false); }} />}
     </div>
   );
