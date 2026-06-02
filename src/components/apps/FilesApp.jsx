@@ -198,6 +198,7 @@ export default function FilesApp({ onOpenApp, onOpenFile, initialPath }) {
         <div className={`flex-1 text-sm ${t.textMuted} truncate`}>/{path.join("/")}</div>
         <button onClick={() => fileInputRef.current?.click()} className={`p-1.5 rounded-lg ${t.hover}`}><Upload className="w-4 h-4" /></button>
         <button onClick={() => setShowNew(!showNew)} className={`p-1.5 rounded-lg ${t.hover}`}><Plus className="w-4 h-4" /></button>
+        {path[0] === "Bin" && entries.length > 0 && <button onClick={emptyBin} className="ml-1 rounded-lg px-2 py-1 text-[10px] font-semibold text-red-400 hover:bg-red-500/10">Empty Bin</button>}
         <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => addFiles(e.target.files)} />
       </div>
 
@@ -225,7 +226,10 @@ export default function FilesApp({ onOpenApp, onOpenFile, initialPath }) {
         {ROOT_FOLDERS.filter((f) => f !== path[0] && f !== "Applications").map((folder) => <button key={folder} onClick={() => moveEntry(menu.name, folder)} className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-white/75 hover:bg-white/10"><MoveRight className="w-3 h-3" /> {folder}</button>)}
         <div className="h-px bg-white/10" /></>}
         {!(isAppInApplications && current[menu.name]?.kind === "app") && (
-          <button onClick={() => deleteEntry(menu.name)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-400 hover:bg-white/10"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
+          <>
+            {path[0] === "Bin" && <button onClick={() => recoverEntry(menu.name)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-emerald-400 hover:bg-white/10"><RotateCcw className="w-3.5 h-3.5" /> Recover</button>}
+            <button onClick={() => deleteEntry(menu.name)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-400 hover:bg-white/10"><Trash2 className="w-3.5 h-3.5" /> {path[0] === "Bin" ? "Delete forever" : "Delete"}</button>
+          </>
         )}
       </div>}
 
