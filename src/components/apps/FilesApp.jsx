@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Folder, File, ArrowLeft, Home, Plus, Trash2, Upload, Image as ImageIcon, Pencil, MoveRight } from "lucide-react";
+import { Folder, File, ArrowLeft, Home, Plus, Trash2, Upload, Image as ImageIcon, Pencil, MoveRight, RotateCcw } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 import { APP_DEFS } from "@/components/desktop/Dock";
-import { readFs, writeFs, getNode, isDir, fileExt, uniqueName, ROOT_FOLDERS } from "@/lib/fileStore";
+import { readFs, writeFs, getNode, isDir, fileExt, uniqueName, ROOT_FOLDERS, moveToBin, recoverFromBin } from "@/lib/fileStore";
 
 export default function FilesApp({ onOpenApp, onOpenFile, initialPath }) {
   const { isDark } = useTheme();
@@ -63,8 +63,22 @@ export default function FilesApp({ onOpenApp, onOpenFile, initialPath }) {
     // Don't delete from Applications root
     if (path[0] === "Applications" && path.length === 1 && current[name]?.kind === "app") return;
     const newFs = clone();
-    delete nodeAt(newFs)[name];
+    // In Bin → permanent delete; elsewhere → move to Bin
+    if (path[0] === "Bin") delete nodeAt(newFs)[name];
+    else moveToBin(newFs, path, name);
     save(newFs); setMenu(null);
+  };
+
+  const recoverEntry = (name) => {
+    const newFs = clone();
+    recoverFromBin(newFs, name);
+    save(newFs); setMenu(null);
+  };
+
+  const emptyBin = () => {
+    const newFs = clone();
+    newFs.Bin = {};
+    save(newFs);
   };
 
   const commitRename = () => {
