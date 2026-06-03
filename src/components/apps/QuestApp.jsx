@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Search, ArrowLeft, ArrowRight, RotateCw, Home, Globe, Plus, X, ExternalLink, Star, Bookmark } from "lucide-react";
+import { Search, ArrowLeft, ArrowRight, RotateCw, Home, Globe, Plus, X, ExternalLink, Star, Bookmark, ZoomIn, ZoomOut } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 import { getNode, readFs, uniqueName, writeFs } from "@/lib/fileStore";
 
@@ -16,7 +16,7 @@ const buildUrl = (raw) => {
   return GOOGLE_SEARCH_URL + encodeURIComponent(trimmed);
 };
 
-const newTab = () => ({ id: Date.now() + Math.random(), url: HOME_URL, inputValue: "", title: "New Tab", loading: true });
+const newTab = () => ({ id: Date.now() + Math.random(), url: HOME_URL, inputValue: "", title: "New Tab", loading: true, zoom: 0.85 });
 
 const extractTitle = (url) => {
   try {
@@ -124,14 +124,17 @@ export default function QuestApp({ onRequestClose, onDragStart }) {
   const removeBookmark = (url) => setBookmarks((prev) => prev.filter((b) => b.url !== url));
   const isBookmarked = bookmarks.some((b) => b.url === activeTab.url);
 
-  const tabBarBg = isDark ? "bg-[#101012]" : "bg-[#e5e5ea]";
-  const toolbarBg = isDark ? "bg-[#2c2c2e]" : "bg-[#f5f5f7]";
-  const inputBg = isDark ? "bg-[#1c1c1e] border-white/10 focus-within:border-white/25" : "bg-white border-black/10 focus-within:border-black/30";
-  const tabActive = isDark ? "bg-[#2c2c2e] text-white" : "bg-white text-[#1c1c1e]";
-  const tabInactive = isDark ? "bg-[#1c1c1e]/60 text-white/50 hover:bg-[#2c2c2e]/60" : "bg-black/5 text-black/50 hover:bg-black/10";
+  const tabBarBg = isDark ? "bg-[#101012]/70" : "bg-[#e5e5ea]/60";
+  const toolbarBg = isDark ? "bg-[#2c2c2e]/60" : "bg-[#f5f5f7]/60";
+  const inputBg = isDark ? "bg-[#1c1c1e]/70 border-white/10 focus-within:border-white/25" : "bg-white/70 border-black/10 focus-within:border-black/30";
+  const tabActive = isDark ? "bg-[#2c2c2e]/80 text-white" : "bg-white/80 text-[#1c1c1e]";
+  const tabInactive = isDark ? "bg-[#1c1c1e]/40 text-white/50 hover:bg-[#2c2c2e]/50" : "bg-black/5 text-black/50 hover:bg-black/10";
+
+  const zoomIn = () => updateTab(activeId, { zoom: Math.min((activeTab.zoom || 0.85) + 0.1, 2) });
+  const zoomOut = () => updateTab(activeId, { zoom: Math.max((activeTab.zoom || 0.85) - 0.1, 0.4) });
 
   return (
-    <div className={`relative flex flex-col h-full ${isDark ? "bg-[#1c1c1e] text-white" : "bg-[#f5f5f7] text-[#1c1c1e]"} font-space`}>
+    <div className={`relative flex flex-col h-full ${isDark ? "bg-[#1c1c1e]/80 text-white" : "bg-[#f5f5f7]/80 text-[#1c1c1e]"} font-space backdrop-blur-xl`}>
       {/* Tab bar - also serves as drag handle for window */}
       <div
         className={`flex items-end gap-0.5 px-2 pt-1.5 ${tabBarBg} border-b ${t.border} overflow-x-auto shrink-0`}
