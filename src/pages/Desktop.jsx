@@ -135,6 +135,17 @@ export default function Desktop() {
   useEffect(() => { const stored = localStorage.getItem("trivix_wallpaper"); if (!stored || stored === '"green"') setWallpaperId(DEFAULT_WALLPAPER_ID); }, [setWallpaperId]);
   useEffect(() => { const h = (e) => e.preventDefault(); document.addEventListener("contextmenu", h); return () => document.removeEventListener("contextmenu", h); }, []);
   useEffect(() => { const style = document.createElement("style"); style.textContent = "a[href*='lovable.dev'], #lovable-badge, [data-lovable-badge] { display: none !important; }"; document.head.appendChild(style); return () => style.remove(); }, []);
+  // Disable page-level pinch/ctrl-wheel zoom
+  useEffect(() => {
+    const wheel = (e) => { if (e.ctrlKey || e.metaKey) e.preventDefault(); };
+    const key = (e) => { if ((e.ctrlKey || e.metaKey) && ["=", "-", "+", "0"].includes(e.key)) e.preventDefault(); };
+    const gesture = (e) => e.preventDefault();
+    window.addEventListener("wheel", wheel, { passive: false });
+    window.addEventListener("keydown", key);
+    document.addEventListener("gesturestart", gesture);
+    document.addEventListener("gesturechange", gesture);
+    return () => { window.removeEventListener("wheel", wheel); window.removeEventListener("keydown", key); document.removeEventListener("gesturestart", gesture); document.removeEventListener("gesturechange", gesture); };
+  }, []);
 
   // Notification system
   const addNotification = useCallback((notif) => {
@@ -380,7 +391,7 @@ export default function Desktop() {
   }
 
   return (
-    <div className="fixed inset-0 overflow-hidden font-space select-none" data-desktop-bg="true" onContextMenu={handleDesktopContext} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { const appId = e.dataTransfer.getData("trivix/app-id") || window.__trivixDraggingDockApp; if (appId) addAppToDesktop(appId, { x: e.clientX, y: e.clientY }); }} style={{ background: isImageWallpaper ? "#030814" : wallpaperResolved, backgroundImage: isImageWallpaper ? wallpaperResolved : undefined, backgroundSize: wallpaperFit, backgroundRepeat: "no-repeat", backgroundPosition: "center center", backgroundAttachment: "fixed", filter: `brightness(${brightness / 100})` }}>
+    <div className="fixed inset-0 overflow-hidden font-space select-none" data-desktop-bg="true" onContextMenu={handleDesktopContext} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { const appId = e.dataTransfer.getData("trivix/app-id") || window.__trivixDraggingDockApp; if (appId) addAppToDesktop(appId, { x: e.clientX, y: e.clientY }); }} style={{ background: isImageWallpaper ? `#000 ${wallpaperResolved} center center / ${wallpaperFit} no-repeat fixed` : wallpaperResolved, backgroundSize: wallpaperFit, backgroundRepeat: "no-repeat", backgroundPosition: "center center", backgroundAttachment: "fixed", filter: `brightness(${brightness / 100})` }}>
       {!isImageWallpaper && <div data-desktop-bg="true" className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: `radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(0,0,0,0.1) 0%, transparent 50%)` }} />}
 
       <MenuBar controls={focusedAppId && !minimizedApps.has(focusedAppId) ? focusedControls : null} onNotifClick={() => setShowNotifCenter((v) => !v)} notifCount={notifications.length} />
