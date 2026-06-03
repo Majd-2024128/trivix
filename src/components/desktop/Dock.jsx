@@ -23,6 +23,8 @@ import canvasIconDark from "@/assets/canvas-icon-dark.png";
 import canvasIconLight from "@/assets/canvas-icon-light.png";
 import tipsIconDark from "@/assets/tips-icon-dark.png";
 import tipsIconLight from "@/assets/tips-icon-light.png";
+import mediaIconDark from "@/assets/media-icon-dark.png";
+import mediaIconLight from "@/assets/media-icon-light.png";
 
 export const APP_DEFS = [
   { id: "weather", name: "Weather", iconDark: weatherIconDark, iconLight: weatherIconLight },
@@ -34,6 +36,7 @@ export const APP_DEFS = [
   { id: "chess", name: "Chess", iconDark: chessIconDark, iconLight: chessIconLight },
   { id: "files", name: "Files", iconDark: filesIconDark, iconLight: filesIconLight },
   { id: "canvas", name: "Canvas", iconDark: canvasIconDark, iconLight: canvasIconLight },
+  { id: "media", name: "Media", iconDark: mediaIconDark, iconLight: mediaIconLight },
   // Tips: searchable in Quest Bar but intentionally NOT in dock
   { id: "tips", name: "Tips", iconDark: tipsIconDark, iconLight: tipsIconLight, hiddenFromDock: true },
 ];
