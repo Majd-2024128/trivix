@@ -175,6 +175,13 @@ export default function QuestApp({ onRequestClose, onDragStart }) {
           </div>
         </form>
 
+        <button onClick={zoomOut} className={`p-1.5 rounded-lg ${t.hover}`} title="Zoom out">
+          <ZoomOut className={`w-4 h-4 ${t.textMuted}`} />
+        </button>
+        <span className={`text-[10px] tabular-nums ${t.textMuted} w-8 text-center`}>{Math.round((activeTab.zoom || 0.85) * 100)}%</span>
+        <button onClick={zoomIn} className={`p-1.5 rounded-lg ${t.hover}`} title="Zoom in">
+          <ZoomIn className={`w-4 h-4 ${t.textMuted}`} />
+        </button>
         <button onClick={addBookmark} className={`p-1.5 rounded-lg ${t.hover}`} title="Bookmark">
           <Star className={`w-4 h-4 ${isBookmarked ? "text-yellow-400 fill-yellow-400" : t.textMuted}`} />
         </button>
@@ -208,7 +215,7 @@ export default function QuestApp({ onRequestClose, onDragStart }) {
                 saveDownloadToFiles(currentUrl);
                 updateTab(tb.id, { loading: false, url: currentUrl, inputValue: currentUrl === HOME_URL ? "" : currentUrl, title: extractTitle(currentUrl) });
               }}
-              className="w-full h-full border-0" style={{ zoom: 0.85 }}
+              className="w-full h-full border-0" style={{ zoom: tb.zoom || 0.85 }}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
               title={`Quest tab ${tb.id}`} />
           </div>
