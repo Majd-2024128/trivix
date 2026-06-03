@@ -1,13 +1,15 @@
 import { useState, useRef } from "react";
-import { Sun, Monitor, Info, Layout, RotateCcw, Lock, Globe } from "lucide-react";
+import { Sun, Monitor, Info, Layout, RotateCcw, Lock, Globe, Wifi, Bluetooth } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 import { WALLPAPERS, gradientForTheme } from "@/lib/wallpapers";
 import { Upload } from "lucide-react";
 import { LANGUAGES, getLang, setLang, useLang } from "@/lib/i18n";
+import { useConnections, connections } from "@/lib/connectionsStore";
 
 const SECTIONS = [
   { id: "display", label: "Display", Icon: Monitor },
   { id: "desktop-dock", label: "Desktop & Dock", Icon: Layout },
+  { id: "connections", label: "Connections", Icon: Wifi },
   { id: "lock", label: "Lock Screen", Icon: Lock },
   { id: "language", label: "Language", Icon: Globe },
   { id: "about", label: "About", Icon: Info },
@@ -25,6 +27,7 @@ export default function SettingsApp({
   const { toggle, isDark } = useTheme();
   const t = themed(isDark);
   const currentLang = useLang();
+  const conn = useConnections();
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
