@@ -135,6 +135,17 @@ export default function Desktop() {
   useEffect(() => { const stored = localStorage.getItem("trivix_wallpaper"); if (!stored || stored === '"green"') setWallpaperId(DEFAULT_WALLPAPER_ID); }, [setWallpaperId]);
   useEffect(() => { const h = (e) => e.preventDefault(); document.addEventListener("contextmenu", h); return () => document.removeEventListener("contextmenu", h); }, []);
   useEffect(() => { const style = document.createElement("style"); style.textContent = "a[href*='lovable.dev'], #lovable-badge, [data-lovable-badge] { display: none !important; }"; document.head.appendChild(style); return () => style.remove(); }, []);
+  // Disable page-level pinch/ctrl-wheel zoom
+  useEffect(() => {
+    const wheel = (e) => { if (e.ctrlKey || e.metaKey) e.preventDefault(); };
+    const key = (e) => { if ((e.ctrlKey || e.metaKey) && ["=", "-", "+", "0"].includes(e.key)) e.preventDefault(); };
+    const gesture = (e) => e.preventDefault();
+    window.addEventListener("wheel", wheel, { passive: false });
+    window.addEventListener("keydown", key);
+    document.addEventListener("gesturestart", gesture);
+    document.addEventListener("gesturechange", gesture);
+    return () => { window.removeEventListener("wheel", wheel); window.removeEventListener("keydown", key); document.removeEventListener("gesturestart", gesture); document.removeEventListener("gesturechange", gesture); };
+  }, []);
 
   // Notification system
   const addNotification = useCallback((notif) => {
