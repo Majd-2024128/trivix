@@ -1,8 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Wifi, WifiOff, Bluetooth, BluetoothOff } from "lucide-react";
 import systemIcon from "@/assets/system-icon.png";
 import systemIconLight from "@/assets/system-icon-light.png";
 import { useTheme } from "@/lib/ThemeContext";
+import { useConnections, connections } from "@/lib/connectionsStore";
 
 export default function SystemDock({ onOpenSettings, isSettingsOpen, onCloseSettings, onLock, dockHidden = false }) {
   const { isDark } = useTheme();
