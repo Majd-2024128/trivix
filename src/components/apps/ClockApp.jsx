@@ -313,6 +313,7 @@ function AlarmTab({ isDark, onNotify }) {
       const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       alarms.forEach((a) => {
         if (a.enabled && a.time === hhmm && now.getSeconds() === 0) {
+          playAlarm();
           onNotify?.({ title: "Alarm", body: a.label });
         }
       });
