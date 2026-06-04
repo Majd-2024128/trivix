@@ -8,7 +8,6 @@ import { useConnections, connections } from "@/lib/connectionsStore";
 
 const SECTIONS = [
   { id: "display", label: "Display", Icon: Monitor },
-  { id: "desktop-dock", label: "Desktop & Dock", Icon: Layout },
   { id: "connections", label: "Connections", Icon: Wifi },
   { id: "lock", label: "Lock Screen", Icon: Lock },
   { id: "language", label: "Language", Icon: Globe },
@@ -138,12 +137,6 @@ export default function SettingsApp({
                 </button>
               </div>
             </div>
-          </div>
-        )}
-
-        {section === "desktop-dock" && (
-          <div className="p-6 space-y-6">
-            <h2 className="text-base font-semibold mb-4">Desktop & Dock</h2>
             <div className="rounded-xl px-4 py-3" style={{ background: cardBg }}>
               <div className="flex items-center justify-between">
                 <div>
