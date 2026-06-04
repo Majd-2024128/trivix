@@ -325,9 +325,12 @@ function AlarmTab({ isDark, onNotify }) {
     <div className="flex flex-col flex-1 p-4">
       <div className="flex items-center justify-between mb-4">
         <span className={`text-sm ${isDark ? "text-white/50" : "text-black/50"}`}>Alarms</span>
-        <button onClick={addAlarm} className={`p-1.5 rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"} transition-colors`}>
-          <Plus className={`w-4 h-4 ${isDark ? "text-white/60" : "text-black/60"}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={stopAlarm} className="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1"><VolumeX className="w-3 h-3" /> Silence</button>
+          <button onClick={addAlarm} className={`p-1.5 rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"} transition-colors`}>
+            <Plus className={`w-4 h-4 ${isDark ? "text-white/60" : "text-black/60"}`} />
+          </button>
+        </div>
       </div>
       <div className="flex-1 space-y-2 overflow-y-auto">
         {alarms.map((alarm) => (
