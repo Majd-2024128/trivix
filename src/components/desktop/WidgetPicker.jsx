@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { WIDGET_DEFS } from "@/lib/widgetDefs";
 import { CLOCK_STYLES } from "@/components/widgets/ClockWidget";
 import { useTheme } from "@/lib/ThemeContext";
-import { CloudSun, StickyNote, Calendar, Clock as ClockIcon, Calculator as CalcIcon, ChevronLeft } from "lucide-react";
+import { CloudSun, StickyNote, Calendar, Clock as ClockIcon, Calculator as CalcIcon, ChevronLeft, Music, Battery, Bluetooth } from "lucide-react";
 
 const ICONS = {
   weather:    CloudSun,
@@ -10,6 +10,9 @@ const ICONS = {
   calendar:   Calendar,
   clock:      ClockIcon,
   calculator: CalcIcon,
+  media:      Music,
+  battery:    Battery,
+  bluetooth:  Bluetooth,
 };
 
 // Centered, non-movable, non-resizable pop-up. Closes when clicking outside (handled

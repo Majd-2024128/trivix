@@ -10,6 +10,8 @@ export default function NotificationCenter({ notifications = [], onClose, onClea
     const dismiss = (e) => {
       const el = document.querySelector("[data-notif-center]");
       if (el && el.contains(e.target)) return;
+      // Ignore clicks on the bell trigger so it can toggle closed itself
+      if (e.target.closest?.("[data-notif-trigger]")) return;
       onClose();
     };
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
