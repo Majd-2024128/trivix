@@ -1,6 +1,21 @@
 import { useState, useEffect, useRef } from "react";
-import { Clock, Timer, Hourglass, Bell, Play, Pause, RotateCcw, Plus, Trash2, Search, X } from "lucide-react";
+import { Clock, Timer, Hourglass, Bell, Play, Pause, RotateCcw, Plus, Trash2, Search, X, VolumeX } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
+import alarmSound from "@/assets/alarm-timer.mp3";
+
+let _activeAudio = null;
+function playAlarm() {
+  try {
+    stopAlarm();
+    const a = new Audio(alarmSound);
+    a.loop = true;
+    a.play().catch(() => {});
+    _activeAudio = a;
+  } catch {}
+}
+function stopAlarm() {
+  if (_activeAudio) { try { _activeAudio.pause(); _activeAudio.currentTime = 0; } catch {} _activeAudio = null; }
+}
 
 const TABS = [
   { id: "clock", label: "Clock", icon: Clock },
