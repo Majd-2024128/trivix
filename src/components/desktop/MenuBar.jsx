@@ -51,7 +51,7 @@ export default function MenuBar({ controls, onNotifClick, notifCount = 0 }) {
 
       {/* Right side: notification bell */}
       <div className="flex items-center gap-2">
-        <button onClick={onNotifClick} className="relative flex items-center justify-center w-7 h-7 rounded-full hover:bg-white/10 transition-colors">
+        <button data-notif-trigger onClick={onNotifClick} className="relative flex items-center justify-center w-7 h-7 rounded-full hover:bg-white/10 transition-colors">
           <Bell className={`w-3.5 h-3.5 ${isDark ? "text-white/70" : "text-black/60"}`} />
           {notifCount > 0 && (
             <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
