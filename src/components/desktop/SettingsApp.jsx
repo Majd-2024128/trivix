@@ -8,7 +8,6 @@ import { useConnections, connections } from "@/lib/connectionsStore";
 
 const SECTIONS = [
   { id: "display", label: "Display", Icon: Monitor },
-  { id: "desktop-dock", label: "Desktop & Dock", Icon: Layout },
   { id: "connections", label: "Connections", Icon: Wifi },
   { id: "lock", label: "Lock Screen", Icon: Lock },
   { id: "language", label: "Language", Icon: Globe },
@@ -138,12 +137,6 @@ export default function SettingsApp({
                 </button>
               </div>
             </div>
-          </div>
-        )}
-
-        {section === "desktop-dock" && (
-          <div className="p-6 space-y-6">
-            <h2 className="text-base font-semibold mb-4">Desktop & Dock</h2>
             <div className="rounded-xl px-4 py-3" style={{ background: cardBg }}>
               <div className="flex items-center justify-between">
                 <div>
@@ -176,10 +169,25 @@ export default function SettingsApp({
                 </button>
               </div>
               {conn.wifi.enabled && (
-                <div>
-                  <label className={`text-xs ${t.textSubtle}`}>Network name</label>
-                  <input value={conn.wifi.ssid} onChange={(e) => connections.set({ wifi: { ...conn.wifi, ssid: e.target.value } })}
-                    className={`w-full rounded-lg px-3 py-2 text-sm outline-none mt-1 ${t.inputBg}`} />
+                <div className="space-y-1">
+                  <label className={`text-xs ${t.textSubtle}`}>Available networks</label>
+                  {conn.wifi.networks.map((n) => {
+                    const isActive = conn.wifi.activeSsid === n.ssid;
+                    const isConn = conn.wifi.connecting === n.ssid;
+                    return (
+                      <button key={n.ssid} onClick={() => isActive ? connections.disconnectWifi() : connections.connectWifi(n.ssid)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"} ${isActive ? (isDark ? "bg-white/5" : "bg-black/5") : ""}`}>
+                        <div className="flex items-center gap-2">
+                          <Wifi className={`w-3.5 h-3.5 ${isActive ? "text-blue-400" : ""}`} style={{ opacity: 0.4 + n.strength * 0.15 }} />
+                          <span>{n.ssid}</span>
+                          <span className={`text-[10px] ${t.textSubtle}`}>{n.security}</span>
+                        </div>
+                        <span className={isActive ? "text-green-400" : t.textSubtle}>
+                          {isConn ? "Connecting…" : isActive ? "Connected" : "Connect"}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -193,18 +201,28 @@ export default function SettingsApp({
                     <div className={`text-xs ${t.textSubtle}`}>{conn.bluetooth.enabled ? `${conn.bluetooth.devices.filter((d) => d.connected).length} connected` : "Off"}</div>
                   </div>
                 </div>
-                <button onClick={() => connections.toggleBluetooth()} className={`relative w-12 h-7 rounded-full transition-colors ${conn.bluetooth.enabled ? "bg-blue-500" : "bg-black/15"}`}>
-                  <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all ${conn.bluetooth.enabled ? "left-[22px]" : "left-0.5"}`} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {conn.bluetooth.enabled && (
+                    <button onClick={() => connections.scanBluetooth()} disabled={conn.bluetooth.scanning}
+                      className={`px-3 py-1.5 rounded-lg text-xs ${isDark ? "bg-white/10 hover:bg-white/15" : "bg-black/10 hover:bg-black/15"} disabled:opacity-50`}>
+                      {conn.bluetooth.scanning ? "Scanning…" : "Scan"}
+                    </button>
+                  )}
+                  <button onClick={() => connections.toggleBluetooth()} className={`relative w-12 h-7 rounded-full transition-colors ${conn.bluetooth.enabled ? "bg-blue-500" : "bg-black/15"}`}>
+                    <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all ${conn.bluetooth.enabled ? "left-[22px]" : "left-0.5"}`} />
+                  </button>
+                </div>
               </div>
               {conn.bluetooth.enabled && (
                 <div className="space-y-1.5">
                   {conn.bluetooth.devices.map((d) => (
-                    <button key={d.id} onClick={() => connections.toggleDevice(d.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"}`}>
-                      <span className="truncate">{d.name}</span>
-                      <span className={`tabular-nums ${d.connected ? "text-green-400" : t.textSubtle}`}>{d.connected ? `Connected • ${d.battery}%` : "Not connected"}</span>
-                    </button>
+                    <div key={d.id} className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs ${isDark ? "hover:bg-white/5" : "hover:bg-black/5"}`}>
+                      <button onClick={() => connections.toggleDevice(d.id)} className="flex-1 text-left truncate">{d.name}</button>
+                      <div className="flex items-center gap-2">
+                        <span className={`tabular-nums ${d.connected ? "text-green-400" : t.textSubtle}`}>{d.connected ? `Connected • ${d.battery}%` : "Not connected"}</span>
+                        <button onClick={() => connections.removeDevice(d.id)} className={`text-red-400 hover:text-red-300 text-[10px]`}>×</button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}

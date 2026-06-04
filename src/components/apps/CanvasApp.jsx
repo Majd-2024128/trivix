@@ -161,6 +161,16 @@ export default function CanvasApp({ importImage }) {
 
     const pos = getPos(e);
 
+    if (addingText) {
+      const id = Date.now();
+      const newObj = { id, type: "text", x: pos.x, y: pos.y, text: "Text", color, fontSize: 24, editing: true, width: 120 };
+      setObjects((prev) => [...prev, newObj]);
+      setSelectedObj(id);
+      setAddingText(false);
+      setTool("select");
+      return;
+    }
+
     if (tool === "select") {
       const clicked = hitTest(pos);
       if (clicked) {
@@ -178,16 +188,6 @@ export default function CanvasApp({ importImage }) {
 
     if (tool === "bucket") {
       floodFill(e);
-      return;
-    }
-
-    if (addingText) {
-      const id = Date.now();
-      const newObj = { id, type: "text", x: pos.x, y: pos.y, text: "Text", color, fontSize: 24, editing: true, width: 120 };
-      setObjects((prev) => [...prev, newObj]);
-      setSelectedObj(id);
-      setAddingText(false);
-      setTool("select");
       return;
     }
 
@@ -227,25 +227,41 @@ export default function CanvasApp({ importImage }) {
     ctx.moveTo(pos.x, pos.y);
   };
 
+  // Window-level mousemove/mouseup for drag/resize so updates don't drop frames
+  useEffect(() => {
+    const move = (e) => {
+      if (panInfoRef.current) {
+        const p = panInfoRef.current;
+        setPanOffset({ x: p.originX + (e.clientX - p.startX), y: p.originY + (e.clientY - p.startY) });
+        return;
+      }
+      if (dragInfoRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        const pos = { x: (e.clientX - rect.left) / zoom, y: (e.clientY - rect.top) / zoom };
+        const info = dragInfoRef.current;
+        setObjects((prev) => prev.map((obj) => obj.id === info.id ? { ...obj, x: pos.x - info.offsetX, y: pos.y - info.offsetY } : obj));
+        return;
+      }
+      if (resizeInfoRef.current) {
+        const info = resizeInfoRef.current;
+        const dx = (e.clientX - info.startX) / zoom;
+        const dy = (e.clientY - info.startY) / zoom;
+        setObjects((prev) => prev.map((obj) => obj.id === info.id ? { ...obj, w: Math.max(20, info.startW + dx), h: Math.max(20, info.startH + dy) } : obj));
+        return;
+      }
+    };
+    const up = () => {
+      panInfoRef.current = null;
+      dragInfoRef.current = null;
+      resizeInfoRef.current = null;
+    };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+    return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
+  }, [zoom]);
+
   const draw = (e) => {
-    if (panInfoRef.current) {
-      const p = panInfoRef.current;
-      setPanOffset({ x: p.originX + (e.clientX - p.startX), y: p.originY + (e.clientY - p.startY) });
-      return;
-    }
-    if (dragInfoRef.current) {
-      const pos = getPos(e);
-      const info = dragInfoRef.current;
-      setObjects((prev) => prev.map((obj) => obj.id === info.id ? { ...obj, x: pos.x - info.offsetX, y: pos.y - info.offsetY } : obj));
-      return;
-    }
-    if (resizeInfoRef.current) {
-      const info = resizeInfoRef.current;
-      const dx = (e.clientX - info.startX) / zoom;
-      const dy = (e.clientY - info.startY) / zoom;
-      setObjects((prev) => prev.map((obj) => obj.id === info.id ? { ...obj, w: Math.max(20, info.startW + dx), h: Math.max(20, info.startH + dy) } : obj));
-      return;
-    }
+    if (panInfoRef.current || dragInfoRef.current || resizeInfoRef.current) return;
     if (!drawingRef.current) return;
 
     const canvas = canvasRef.current;
@@ -267,10 +283,6 @@ export default function CanvasApp({ importImage }) {
   };
 
   const endDraw = () => {
-    if (panInfoRef.current) { panInfoRef.current = null; return; }
-    if (dragInfoRef.current || resizeInfoRef.current) {
-      dragInfoRef.current = null; resizeInfoRef.current = null; return;
-    }
     if (!drawingRef.current) return;
     drawingRef.current = false;
     const ctx = canvasRef.current.getContext("2d");

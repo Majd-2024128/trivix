@@ -1,6 +1,21 @@
 import { useState, useEffect, useRef } from "react";
-import { Clock, Timer, Hourglass, Bell, Play, Pause, RotateCcw, Plus, Trash2, Search, X } from "lucide-react";
+import { Clock, Timer, Hourglass, Bell, Play, Pause, RotateCcw, Plus, Trash2, Search, X, VolumeX } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
+import alarmSound from "@/assets/alarm-timer.mp3";
+
+let _activeAudio = null;
+function playAlarm() {
+  try {
+    stopAlarm();
+    const a = new Audio(alarmSound);
+    a.loop = true;
+    a.play().catch(() => {});
+    _activeAudio = a;
+  } catch {}
+}
+function stopAlarm() {
+  if (_activeAudio) { try { _activeAudio.pause(); _activeAudio.currentTime = 0; } catch {} _activeAudio = null; }
+}
 
 const TABS = [
   { id: "clock", label: "Clock", icon: Clock },
@@ -228,6 +243,7 @@ function TimerTab({ isDark, onNotify }) {
         setRemaining((r) => {
           if (r <= 1) {
             setRunning(false);
+            playAlarm();
             onNotify?.({ title: "Timer", body: "Time's up!" });
             return 0;
           }
@@ -275,6 +291,9 @@ function TimerTab({ isDark, onNotify }) {
           {running ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
         </button>
       </div>
+      <div className="flex gap-3 items-center">
+      {remaining === 0 && <button onClick={stopAlarm} className="text-red-400 text-xs flex items-center gap-1 hover:text-red-300"><VolumeX className="w-3 h-3" /> Stop</button>}
+      </div>
       {remaining === 0 && <p className="mt-4 text-red-400 text-sm animate-pulse">Time's up!</p>}
     </div>
   );
@@ -294,6 +313,7 @@ function AlarmTab({ isDark, onNotify }) {
       const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       alarms.forEach((a) => {
         if (a.enabled && a.time === hhmm && now.getSeconds() === 0) {
+          playAlarm();
           onNotify?.({ title: "Alarm", body: a.label });
         }
       });
@@ -305,9 +325,12 @@ function AlarmTab({ isDark, onNotify }) {
     <div className="flex flex-col flex-1 p-4">
       <div className="flex items-center justify-between mb-4">
         <span className={`text-sm ${isDark ? "text-white/50" : "text-black/50"}`}>Alarms</span>
-        <button onClick={addAlarm} className={`p-1.5 rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"} transition-colors`}>
-          <Plus className={`w-4 h-4 ${isDark ? "text-white/60" : "text-black/60"}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={stopAlarm} className="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1"><VolumeX className="w-3 h-3" /> Silence</button>
+          <button onClick={addAlarm} className={`p-1.5 rounded-lg ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"} transition-colors`}>
+            <Plus className={`w-4 h-4 ${isDark ? "text-white/60" : "text-black/60"}`} />
+          </button>
+        </div>
       </div>
       <div className="flex-1 space-y-2 overflow-y-auto">
         {alarms.map((alarm) => (

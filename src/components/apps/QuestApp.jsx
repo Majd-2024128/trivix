@@ -205,21 +205,25 @@ export default function QuestApp({ onRequestClose, onDragStart }) {
         </div>
       )}
 
-      <div className="flex-1 relative bg-white">
-        {tabs.map((tb) => (
-          <div key={tb.id} className="absolute inset-0" style={{ display: tb.id === activeId ? "block" : "none" }}>
-            <iframe ref={(el) => { if (el) iframeRefs.current[tb.id] = el; }}
-              src={tb.url} onLoad={() => {
-                let currentUrl = tb.url;
-                try { currentUrl = iframeRefs.current[tb.id]?.contentWindow?.location?.href || tb.url; } catch {}
-                saveDownloadToFiles(currentUrl);
-                updateTab(tb.id, { loading: false, url: currentUrl, inputValue: currentUrl === HOME_URL ? "" : currentUrl, title: extractTitle(currentUrl) });
-              }}
-              className="w-full h-full border-0" style={{ zoom: tb.zoom || 0.85 }}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-              title={`Quest tab ${tb.id}`} />
-          </div>
-        ))}
+      <div className="flex-1 relative bg-white overflow-hidden">
+        {tabs.map((tb) => {
+          const z = tb.zoom || 0.85;
+          return (
+            <div key={tb.id} className="absolute inset-0" style={{ display: tb.id === activeId ? "block" : "none" }}>
+              <iframe ref={(el) => { if (el) iframeRefs.current[tb.id] = el; }}
+                src={tb.url} onLoad={() => {
+                  let currentUrl = tb.url;
+                  try { currentUrl = iframeRefs.current[tb.id]?.contentWindow?.location?.href || tb.url; } catch {}
+                  saveDownloadToFiles(currentUrl);
+                  updateTab(tb.id, { loading: false, url: currentUrl, inputValue: currentUrl === HOME_URL ? "" : currentUrl, title: extractTitle(currentUrl) });
+                }}
+                className="border-0"
+                style={{ width: `${100 / z}%`, height: `${100 / z}%`, transform: `scale(${z})`, transformOrigin: "0 0" }}
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                title={`Quest tab ${tb.id}`} />
+            </div>
+          );
+        })}
         {activeTab.loading && (
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500/30 z-10"><div className="h-full bg-blue-500 animate-pulse w-1/2" /></div>
         )}

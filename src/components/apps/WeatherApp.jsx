@@ -41,14 +41,11 @@ export default function WeatherApp() {
   const fetchWeather = async (q) => {
     setLoading(true); setError(null);
     try {
-      const base = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/weather`;
-      const headers = {
-        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-      };
+      const API_KEY = "e340ed175acb50d6875920e74c14558a";
+      const base = "https://api.openweathermap.org/data/2.5";
       const [w, f] = await Promise.all([
-        fetch(`${base}?endpoint=weather&q=${encodeURIComponent(q)}`, { headers }),
-        fetch(`${base}?endpoint=forecast&q=${encodeURIComponent(q)}`, { headers }),
+        fetch(`${base}/weather?q=${encodeURIComponent(q)}&units=metric&appid=${API_KEY}`),
+        fetch(`${base}/forecast?q=${encodeURIComponent(q)}&units=metric&appid=${API_KEY}`),
       ]);
       if (!w.ok) throw new Error("City not found");
       const wData = await w.json();
