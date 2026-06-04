@@ -161,6 +161,16 @@ export default function CanvasApp({ importImage }) {
 
     const pos = getPos(e);
 
+    if (addingText) {
+      const id = Date.now();
+      const newObj = { id, type: "text", x: pos.x, y: pos.y, text: "Text", color, fontSize: 24, editing: true, width: 120 };
+      setObjects((prev) => [...prev, newObj]);
+      setSelectedObj(id);
+      setAddingText(false);
+      setTool("select");
+      return;
+    }
+
     if (tool === "select") {
       const clicked = hitTest(pos);
       if (clicked) {
@@ -178,16 +188,6 @@ export default function CanvasApp({ importImage }) {
 
     if (tool === "bucket") {
       floodFill(e);
-      return;
-    }
-
-    if (addingText) {
-      const id = Date.now();
-      const newObj = { id, type: "text", x: pos.x, y: pos.y, text: "Text", color, fontSize: 24, editing: true, width: 120 };
-      setObjects((prev) => [...prev, newObj]);
-      setSelectedObj(id);
-      setAddingText(false);
-      setTool("select");
       return;
     }
 
