@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Clock, Timer, Hourglass, Bell, Play, Pause, RotateCcw, Plus, Trash2, Search, X, VolumeX } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
+import { liveActivity } from "@/lib/liveActivityStore";
 import alarmSound from "@/assets/alarm-timer.mp3";
 
 let _activeAudio = null;
@@ -253,6 +254,19 @@ function TimerTab({ isDark, onNotify }) {
     } else clearInterval(intervalRef.current);
     return () => clearInterval(intervalRef.current);
   }, [running, remaining, onNotify]);
+
+  // Publish timer to menu bar live activity
+  useEffect(() => {
+    const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+    if (running && remaining > 0) {
+      liveActivity.set("timer", { icon: Timer, label: fmt(remaining), color: "#f59e0b" });
+    } else if (!running && remaining === 0) {
+      liveActivity.set("timer", { icon: Bell, label: "Time's up!", color: "#ef4444" });
+    } else {
+      liveActivity.clear("timer");
+    }
+    return () => { if (!running) liveActivity.clear("timer"); };
+  }, [running, remaining]);
 
   const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
   const commitEdit = () => {
