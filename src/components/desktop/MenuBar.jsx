@@ -4,6 +4,7 @@ import { useLiveActivity } from "@/lib/liveActivityStore";
 
 export default function MenuBar({ controls, onNotifClick, notifCount = 0 }) {
   const { isDark } = useTheme();
+  const activities = useLiveActivity();
   const displayName = controls?.appName === "Settings" ? "System" : controls?.appName;
   const labelColor = isDark ? "text-white/60" : "text-black/70";
   const inactiveX = isDark ? "text-red-400" : "text-red-500";
