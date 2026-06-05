@@ -225,15 +225,27 @@ export default function SystemBar({ onDateClick, dockHidden = false }) {
                 {conn.bluetooth.devices.map((d) => (
                   <button key={d.id} onClick={() => connections.toggleDevice(d.id)}
                     className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg text-[11px] ${subtleHover}`}>
-                    <span className="truncate flex-1 text-left">{d.name}</span>
+                    <span className="truncate flex-1 text-left flex items-center gap-1.5">
+                      {d.name}
+                      {!d.simulated && <span className="text-[9px] px-1 rounded bg-green-500/20 text-green-400">REAL</span>}
+                    </span>
                     <span className={`text-[10px] tabular-nums ${d.connected ? "text-green-400" : "opacity-50"}`}>
-                      {d.connected ? `${d.battery}%` : "off"}
+                      {d.connected ? (d.battery != null ? `${d.battery}%` : "on") : "off"}
                     </span>
                   </button>
                 ))}
-                {conn.bluetooth.devices.length === 0 && <div className="text-[11px] opacity-50 text-center py-2">No devices</div>}
+                {conn.bluetooth.devices.length === 0 && (
+                  <button onClick={() => connections.scanBluetooth()} disabled={conn.bluetooth.scanning}
+                    className={`w-full text-[11px] text-center py-2 rounded-lg ${subtleHover} ${subtleBg}`}>
+                    {conn.bluetooth.scanning ? "Scanning..." : "Click to scan for devices"}
+                  </button>
+                )}
+                {conn.bluetooth.lastError && (
+                  <div className="text-[10px] text-red-400 px-2 pt-1">{conn.bluetooth.lastError}</div>
+                )}
               </div>
             )}
+            <div className={`text-[10px] mt-2 ${textSecondary}`}>Wi-Fi list is simulated — browsers can't scan real networks.</div>
           </div>
         </div>
       )}
