@@ -255,6 +255,19 @@ function TimerTab({ isDark, onNotify }) {
     return () => clearInterval(intervalRef.current);
   }, [running, remaining, onNotify]);
 
+  // Publish timer to menu bar live activity
+  useEffect(() => {
+    const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+    if (running && remaining > 0) {
+      liveActivity.set("timer", { icon: Timer, label: fmt(remaining), color: "#f59e0b" });
+    } else if (!running && remaining === 0) {
+      liveActivity.set("timer", { icon: Bell, label: "Time's up!", color: "#ef4444" });
+    } else {
+      liveActivity.clear("timer");
+    }
+    return () => { if (!running) liveActivity.clear("timer"); };
+  }, [running, remaining]);
+
   const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
   const commitEdit = () => {
     const match = draft.match(/^(\d+)(?::(\d{1,2}))?$/);
