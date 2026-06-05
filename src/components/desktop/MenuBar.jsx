@@ -1,5 +1,6 @@
 import { X, ArrowDown, Maximize2, Bell } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
+import { useLiveActivity } from "@/lib/liveActivityStore";
 
 export default function MenuBar({ controls, onNotifClick, notifCount = 0 }) {
   const { isDark } = useTheme();
