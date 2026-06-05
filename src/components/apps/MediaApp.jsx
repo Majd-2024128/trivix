@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Music, Video as VideoIcon, Play, Pause, SkipForward, SkipBack, ArrowLeftRight, Disc3 } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
 import { readFs, getNode, flattenFs } from "@/lib/fileStore";
+import { liveActivity } from "@/lib/liveActivityStore";
 
 const isAudio = (e) => e?.type?.startsWith("audio/") || /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(e?.name || "");
 const isVideo = (e) => e?.type?.startsWith("video/") || /\.(mp4|webm|mov|mkv|avi)$/i.test(e?.name || "");
