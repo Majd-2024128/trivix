@@ -21,11 +21,8 @@ const DEFAULT = {
   bluetooth: {
     enabled: true,
     scanning: false,
-    devices: [
-      { id: "1", name: "AirPods Pro", connected: true, battery: 78, simulated: true },
-      { id: "2", name: "Magic Mouse", connected: true, battery: 45, simulated: true },
-      { id: "3", name: "Magic Keyboard", connected: false, battery: 92, simulated: true },
-    ],
+    lastError: null,
+    devices: [],
   },
 };
 
