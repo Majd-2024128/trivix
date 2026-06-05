@@ -37,6 +37,16 @@ export default function MediaApp({ file, name }) {
     else mediaRef.current.pause();
   }, [playing, current]);
 
+  // Publish live activity to the menu bar
+  useEffect(() => {
+    if (playing && current) {
+      liveActivity.set("media", { icon: Disc3, label: current.name, color: "#ec4899" });
+    } else {
+      liveActivity.clear("media");
+    }
+    return () => liveActivity.clear("media");
+  }, [playing, current]);
+
   const playItem = (item) => { setCurrent(item); setPlaying(true); };
   const switchMode = () => { setMode((m) => (m === "audio" ? "video" : "audio")); setCurrent(null); setPlaying(false); };
 
