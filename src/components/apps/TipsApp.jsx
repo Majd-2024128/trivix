@@ -1,31 +1,129 @@
-import { Keyboard, MousePointer2, LayoutGrid, AppWindow, Folder, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { Keyboard, MousePointer2, LayoutGrid, AppWindow, Folder, Sparkles, Globe, Search } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
+import { useLang, t } from "@/lib/i18n";
 
 const sections = [
-  { icon: Keyboard, title: "Shortcuts", items: ["Alt/Option + F opens Quest Bar", "Alt/Option + L locks the screen", "Alt/Option + K enters sleep mode", "Alt/Option + D shows the desktop", "Alt/Option + S cycles every open app", "Alt/Option + C closes the focused app", "Alt/Option + B bold (in Notes)", "Alt/Option + I italic (in Notes)", "Alt/Option + U underline (in Notes)"] },
-  { icon: MousePointer2, title: "Desktop", items: ["Right-click the desktop to add widgets", "Drag app icons from the dock to the desktop", "Right-click desktop files to rename, move, or delete", "Right-click dock icons to pin/hide them"] },
-  { icon: LayoutGrid, title: "Widgets", items: ["Widgets snap to a clean 20px grid", "Resize from the lower-right corner", "Right-click a widget to remove it"] },
-  { icon: Folder, title: "Files", items: ["Drop files from your computer into Files", "Drag files into folders", "Double-click a file to preview it in Glimpse", "TXT files open in Notes for editing", "Paste files with Ctrl/Cmd+V"] },
-  { icon: AppWindow, title: "Apps", items: ["Quest is the web browser", "Canvas is for drawing and painting", "System changes wallpapers, display, dock, and lock screen", "Notes supports rich text, images, and highlighting", "Weather lets you pin up to 5 favorite cities", "Calendar lets you schedule events with notifications"] },
-  { icon: Sparkles, title: "Pro touches", items: ["Alt/Option-click expand to fill behind the docks", "Double-click Quest's title bar to maximize", "Wallpaper fit can switch between Cover and Contain", "Change language in System settings"] },
+  { id: "shortcuts", icon: Keyboard, key: "shortcuts", items: [
+    { t: "Alt/Option + F", d: "Open Quest Bar (universal search)" },
+    { t: "Alt/Option + L", d: "Lock the screen" },
+    { t: "Alt/Option + K", d: "Enter sleep mode" },
+    { t: "Alt/Option + D", d: "Show the desktop" },
+    { t: "Alt/Option + S", d: "Cycle through open apps" },
+    { t: "Alt/Option + C", d: "Close the focused app" },
+    { t: "Alt/Option + X", d: "Open System settings" },
+    { t: "Alt/Option + B / I / U", d: "Bold / italic / underline in Notes" },
+  ]},
+  { id: "desktop", icon: MousePointer2, key: "desktop", items: [
+    { t: "Right-click desktop", d: "Add widgets, customize wallpaper, close all apps" },
+    { t: "Drag dock icons", d: "Drop onto the desktop to create a shortcut" },
+    { t: "Right-click dock icons", d: "Pin or hide apps" },
+    { t: "Right-click file/folder", d: "Rename, move, or send to Bin" },
+  ]},
+  { id: "widgets", icon: LayoutGrid, key: "widgets", items: [
+    { t: "Snap grid", d: "Widgets snap to a clean 20px grid" },
+    { t: "Resize", d: "Drag from the lower-right corner" },
+    { t: "Remove", d: "Right-click a widget to remove it" },
+    { t: "Picker", d: "Right-click desktop → Add Widget" },
+  ]},
+  { id: "files", icon: Folder, key: "files", items: [
+    { t: "Drop to upload", d: "Drag files from your computer into Files" },
+    { t: "Organize", d: "Drag files between folders" },
+    { t: "Preview", d: "Double-click to preview in Glimpse" },
+    { t: "TXT files", d: "Open in Notes for editing" },
+    { t: "Bin", d: "Deleted items go to the Bin folder" },
+  ]},
+  { id: "apps", icon: AppWindow, key: "apps", items: [
+    { t: "Quest", d: "Web browser with tabs, pinning, and zoom" },
+    { t: "Canvas", d: "Drawing with shapes, text, and layers" },
+    { t: "System", d: "Wallpapers, display, lock screen, language" },
+    { t: "Notes", d: "Rich text, images, highlighting" },
+    { t: "Weather", d: "Pin up to 5 favorite cities" },
+    { t: "Calendar", d: "Schedule events with notifications" },
+    { t: "Media", d: "Play music & video from your Files" },
+  ]},
+  { id: "pro", icon: Sparkles, key: "proTouches", items: [
+    { t: "Maximize", d: "Alt/Option-click the green button to fill behind docks" },
+    { t: "Quest title bar", d: "Double-click to maximize" },
+    { t: "Wallpaper fit", d: "Switch between Cover and Contain" },
+    { t: "Language", d: "Change in System → Language" },
+    { t: "Bluetooth", d: "Scan for real devices via battery popup" },
+  ]},
 ];
 
 export default function TipsApp() {
   const { isDark } = useTheme();
-  const t = themed(isDark);
+  const tt = themed(isDark);
+  useLang();
+  const [active, setActive] = useState("shortcuts");
+  const [q, setQ] = useState("");
+  const current = sections.find((s) => s.id === active) || sections[0];
+  const filtered = q
+    ? current.items.filter((i) => (i.t + " " + i.d).toLowerCase().includes(q.toLowerCase()))
+    : current.items;
+
   return (
-    <div className={`h-full overflow-y-auto p-5 font-space ${isDark ? "bg-[#111114] text-white" : "bg-[#f7f8fb] text-[#1c1c1e]"}`}>
-      <h1 className="text-2xl font-bold mb-1">Tips</h1>
-      <p className={`text-sm mb-5 ${t.textMuted}`}>A quick guide to Trivix OS.</p>
-      <div className="grid grid-cols-2 gap-3">
-        {sections.map(({ icon: Icon, title, items }) => (
-          <section key={title} className={`rounded-xl border p-4 ${t.border} ${isDark ? "bg-white/5" : "bg-white"}`}>
-            <div className="flex items-center gap-2 mb-3"><Icon className="w-4 h-4 text-cyan-400" /><h2 className="text-sm font-semibold">{title}</h2></div>
-            <ul className={`space-y-2 text-xs leading-relaxed ${t.textMuted}`}>{items.map((item) => <li key={item}>• {item}</li>)}</ul>
-          </section>
-        ))}
-      </div>
-      <p className={`${t.textFaint} text-[10px] text-center mt-5`}>Copyright © 2026 Tejt</p>
+    <div className={`h-full flex font-space ${isDark ? "bg-[#111114] text-white" : "bg-[#f7f8fb] text-[#1c1c1e]"}`}>
+      {/* Sidebar */}
+      <aside className={`w-56 shrink-0 border-r ${tt.border} ${isDark ? "bg-black/30" : "bg-white/60"} p-3 flex flex-col`}>
+        <div className="flex items-center gap-2 px-2 py-1 mb-3">
+          <Sparkles className="w-4 h-4 text-cyan-400" />
+          <h1 className="text-lg font-bold">{t("tips")}</h1>
+        </div>
+        <div className={`flex items-center gap-2 px-2 py-1.5 rounded-lg mb-2 ${isDark ? "bg-white/5" : "bg-black/5"}`}>
+          <Search className="w-3.5 h-3.5 opacity-60" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("search")}
+            className="bg-transparent outline-none text-xs flex-1" />
+        </div>
+        <nav className="flex-1 overflow-y-auto space-y-0.5">
+          {sections.map((s) => {
+            const Icon = s.icon;
+            const isActive = s.id === active;
+            return (
+              <button key={s.id} onClick={() => setActive(s.id)}
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs text-left transition-colors ${isActive ? (isDark ? "bg-cyan-500/20 text-cyan-300" : "bg-cyan-500/15 text-cyan-700") : (isDark ? "hover:bg-white/5" : "hover:bg-black/5")}`}>
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="font-medium">{t(s.key) || s.key}</span>
+              </button>
+            );
+          })}
+        </nav>
+        <div className={`mt-3 pt-3 border-t ${tt.border} flex items-center gap-2 px-2 text-[10px] ${tt.textFaint}`}>
+          <Globe className="w-3 h-3" /> Trivix OS v2.0
+        </div>
+      </aside>
+
+      {/* Content */}
+      <main className="flex-1 overflow-y-auto p-8">
+        <div className="max-w-2xl">
+          <div className="flex items-center gap-3 mb-2">
+            <div className={`p-2.5 rounded-xl ${isDark ? "bg-cyan-500/15" : "bg-cyan-500/10"}`}>
+              <current.icon className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold capitalize">{t(current.key) || current.key}</h2>
+              <p className={`text-xs ${tt.textMuted}`}>{filtered.length} tip{filtered.length !== 1 ? "s" : ""}</p>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-2">
+            {filtered.map((item, i) => (
+              <div key={i} className={`rounded-xl p-4 border ${tt.border} ${isDark ? "bg-white/[0.03] hover:bg-white/[0.06]" : "bg-white hover:bg-black/[0.02]"} transition-colors`}>
+                <div className="flex items-start gap-3">
+                  <div className={`mt-0.5 w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold">{item.t}</div>
+                    <div className={`text-xs mt-0.5 ${tt.textMuted}`}>{item.d}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {filtered.length === 0 && (
+              <div className={`text-center text-xs ${tt.textFaint} py-8`}>No matching tips.</div>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
