@@ -75,17 +75,18 @@ export const connections = {
   },
   async scanBluetooth() {
     if (!navigator.bluetooth) {
-      alert("Web Bluetooth is not supported in this browser.");
+      const v = read();
+      write({ ...v, bluetooth: { ...v.bluetooth, lastError: "Web Bluetooth is not supported in this browser. Try Chrome/Edge on desktop or Android." } });
       return null;
     }
     const v = read();
-    write({ ...v, bluetooth: { ...v.bluetooth, scanning: true } });
+    write({ ...v, bluetooth: { ...v.bluetooth, scanning: true, lastError: null } });
     try {
       const device = await navigator.bluetooth.requestDevice({
         acceptAllDevices: true,
         optionalServices: ["battery_service"],
       });
-      let battery = 100;
+      let battery = null;
       try {
         const server = await device.gatt.connect();
         gattCache.set(device.id, server);
@@ -109,13 +110,14 @@ export const connections = {
       const cur = read();
       const existing = cur.bluetooth.devices.find((d) => d.id === device.id);
       const updated = existing
-        ? cur.bluetooth.devices.map((d) => d.id === device.id ? { ...d, connected: true, battery } : d)
-        : [...cur.bluetooth.devices, { id: device.id, name: device.name || "Unknown Device", connected: true, battery, simulated: false }];
-      write({ ...cur, bluetooth: { ...cur.bluetooth, scanning: false, devices: updated } });
+        ? cur.bluetooth.devices.map((d) => d.id === device.id ? { ...d, connected: true, battery: battery ?? d.battery } : d)
+        : [...cur.bluetooth.devices, { id: device.id, name: device.name || "Unknown Device", connected: true, battery: battery ?? 100, simulated: false }];
+      write({ ...cur, bluetooth: { ...cur.bluetooth, scanning: false, devices: updated, lastError: null } });
       return device;
     } catch (e) {
       const cur = read();
-      write({ ...cur, bluetooth: { ...cur.bluetooth, scanning: false } });
+      const msg = e?.name === "NotFoundError" ? "No device selected." : (e?.message || "Bluetooth scan failed.");
+      write({ ...cur, bluetooth: { ...cur.bluetooth, scanning: false, lastError: msg } });
       return null;
     }
   },
