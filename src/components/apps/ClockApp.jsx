@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Clock, Timer, Hourglass, Bell, Play, Pause, RotateCcw, Plus, Trash2, Search, X, VolumeX } from "lucide-react";
 import { useTheme, themed } from "@/lib/ThemeContext";
+import { liveActivity } from "@/lib/liveActivityStore";
 import alarmSound from "@/assets/alarm-timer.mp3";
 
 let _activeAudio = null;
