@@ -104,13 +104,19 @@
 @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .animate-spin-slow { animation: spin-slow 4s linear infinite; }
 
-/* Custom Trivix cursor (30x30) — arrow with subtle drop shadow */
+/* Custom Trivix cursor pack (30x30 PNG) */
 html, body {
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><defs><filter id='s' x='-20%25' y='-20%25' width='140%25' height='140%25'><feDropShadow dx='0.6' dy='1' stdDeviation='0.7' flood-color='black' flood-opacity='0.45'/></filter></defs><path filter='url(%23s)' d='M4 3 L4 22 L9.2 17.2 L12.4 25 L15.7 23.6 L12.5 16 L20 16 Z' fill='white' stroke='black' stroke-width='1.2' stroke-linejoin='round'/></svg>") 4 3, auto;
+  cursor: url("/cursors/pointer.png") 3 3, auto;
 }
-a, button, [role="button"], .cursor-pointer {
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><defs><filter id='s' x='-20%25' y='-20%25' width='140%25' height='140%25'><feDropShadow dx='0.6' dy='1' stdDeviation='0.7' flood-color='black' flood-opacity='0.45'/></filter></defs><g filter='url(%23s)' fill='white' stroke='black' stroke-width='1.1' stroke-linejoin='round'><path d='M11 4 a2 2 0 0 1 4 0 V14 H17 V8 a2 2 0 0 1 4 0 V15 H23 a2 2 0 0 1 2 2 V23 a4 4 0 0 1 -4 4 H15 a4 4 0 0 1 -3.5 -2 L7 17 a2 2 0 0 1 3.2 -2.4 L11 15.5 Z'/></g></svg>") 12 4, pointer;
+a, button, [role="button"], .cursor-pointer, [data-cursor="pointer"] {
+  cursor: url("/cursors/hand-pointer.png") 8 4, pointer;
+}
+[data-cursor="grab"], .cursor-grab {
+  cursor: url("/cursors/hand.png") 8 4, grab;
+}
+[data-cursor="move"], .cursor-move {
+  cursor: url("/cursors/move.png") 15 15, move;
 }
 input, textarea, [contenteditable="true"] {
-  cursor: text;
+  cursor: url("/cursors/text.png") 15 15, text;
 }
