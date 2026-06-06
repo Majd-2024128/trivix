@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { X, ArrowDown, Maximize2, Bell } from "lucide-react";
 import { useTheme } from "@/lib/ThemeContext";
 import { useLiveActivity } from "@/lib/liveActivityStore";
+import LiveActivityPopup from "./LiveActivityPopup";
 
 export default function MenuBar({ controls, onNotifClick, notifCount = 0 }) {
   const { isDark } = useTheme();
+  const [openActivity, setOpenActivity] = useState(null);
   const activities = useLiveActivity();
   const displayName = controls?.appName === "Settings" ? "System" : controls?.appName;
   const labelColor = isDark ? "text-white/60" : "text-black/70";
@@ -56,14 +59,14 @@ export default function MenuBar({ controls, onNotifClick, notifCount = 0 }) {
         {activities.map((a) => {
           const Icon = a.icon;
           return (
-            <button key={a.key} onClick={a.onClick} title={a.label}
-              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${isDark ? "bg-white/10 hover:bg-white/15 text-white/90" : "bg-black/10 hover:bg-black/15 text-black/80"}`}
-              style={a.color ? { color: a.color } : undefined}>
-              {Icon && <Icon className="w-3 h-3" />}
-              <span className="max-w-[140px] truncate">{a.label}</span>
+            <button data-live-trigger key={a.key} onClick={() => setOpenActivity((cur) => cur?.key === a.key ? null : a)} title={a.label}
+              className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors bg-white/80 hover:bg-white text-black border border-black/10">
+              {Icon && <Icon className="w-3 h-3 text-black" />}
+              <span className="max-w-[140px] truncate text-black">{a.label}</span>
             </button>
           );
         })}
+        {openActivity && <LiveActivityPopup activity={activities.find((x) => x.key === openActivity.key) || openActivity} onClose={() => setOpenActivity(null)} />}
         <button data-notif-trigger onClick={onNotifClick} className="relative flex items-center justify-center w-7 h-7 rounded-full hover:bg-white/10 transition-colors">
           <Bell className={`w-3.5 h-3.5 ${isDark ? "text-white/70" : "text-black/60"}`} />
           {notifCount > 0 && (

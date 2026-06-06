@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { BatteryFull, BatteryMedium, BatteryLow, BatteryCharging, Wifi, WifiOff, Bluetooth, BluetoothOff, Loader2, Search } from "lucide-react";
-import { useConnections, connections } from "@/lib/connectionsStore";
+import { BatteryFull, BatteryMedium, BatteryLow, BatteryCharging } from "lucide-react";
 
 async function isAreaLight(rect) {
   try {
@@ -69,7 +68,6 @@ export default function SystemBar({ onDateClick, dockHidden = false }) {
   const [charging, setCharging] = useState(false);
   const [light, setLight] = useState(false);
   const [showBatt, setShowBatt] = useState(false);
-  const conn = useConnections();
   const ref = useRef(null);
 
   useEffect(() => {
@@ -138,8 +136,6 @@ export default function SystemBar({ onDateClick, dockHidden = false }) {
   const battColor = charging ? "from-green-400 to-green-600" : battery > 60 ? "from-green-400 to-emerald-500" : battery > 20 ? "from-yellow-400 to-orange-500" : "from-red-500 to-red-600";
 
   const popupTone = light ? "text-[#1c1c1e]" : "text-white";
-  const subtleBg = light ? "bg-black/5" : "bg-white/5";
-  const subtleHover = light ? "hover:bg-black/10" : "hover:bg-white/10";
 
   return (
     <div ref={ref} className="fixed bottom-3 right-3 z-50" style={{ transform: dockHidden ? "translateY(120px)" : "translateY(0)", opacity: dockHidden ? 0 : 1, transition: "transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.25s" }}>
@@ -156,8 +152,7 @@ export default function SystemBar({ onDateClick, dockHidden = false }) {
       </div>
 
       {showBatt && (
-        <div data-batt-popup className={`absolute bottom-full right-0 mb-2 w-72 rounded-2xl p-4 shadow-2xl font-space ${popupTone}`} style={containerStyle}>
-          {/* Battery */}
+        <div data-batt-popup className={`absolute bottom-full right-0 mb-2 w-64 rounded-2xl p-4 shadow-2xl font-space ${popupTone}`} style={containerStyle}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold">Battery</span>
             {charging && <BatteryCharging className="w-4 h-4 text-green-400" />}
@@ -167,86 +162,6 @@ export default function SystemBar({ onDateClick, dockHidden = false }) {
             <div className={`h-full rounded-full bg-gradient-to-r ${battColor} transition-all`} style={{ width: `${battery ?? 0}%` }} />
           </div>
           <div className={`mt-1 text-[11px] ${textSecondary}`}>{charging ? "Charging" : battery > 20 ? "On battery" : "Low battery"}</div>
-
-          {/* WiFi */}
-          <div className={`mt-4 pt-3 border-t ${light ? "border-black/10" : "border-white/10"}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                {conn.wifi.enabled ? <Wifi className="w-4 h-4 text-blue-400" /> : <WifiOff className="w-4 h-4 opacity-50" />}
-                <span className="text-xs font-medium">Wi-Fi</span>
-              </div>
-              <button onClick={() => connections.toggleWifi()} className={`relative w-9 h-5 rounded-full ${conn.wifi.enabled ? "bg-blue-500" : light ? "bg-black/15" : "bg-white/15"}`}>
-                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${conn.wifi.enabled ? "left-[20px]" : "left-0.5"}`} />
-              </button>
-            </div>
-            {conn.wifi.enabled && (
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {conn.wifi.networks.map((n) => {
-                  const isActive = conn.wifi.activeSsid === n.ssid;
-                  const isConn = conn.wifi.connecting === n.ssid;
-                  return (
-                    <button key={n.ssid} onClick={() => isActive ? connections.disconnectWifi() : connections.connectWifi(n.ssid)}
-                      className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] ${subtleHover} ${isActive ? subtleBg : ""}`}>
-                      <div className="flex items-center gap-1.5 truncate">
-                        <Wifi className={`w-3 h-3 ${isActive ? "text-blue-400" : ""}`} style={{ opacity: 0.4 + n.strength * 0.15 }} />
-                        <span className="truncate">{n.ssid}</span>
-                      </div>
-                      <span className={`text-[10px] ${isActive ? "text-green-400" : "opacity-50"}`}>
-                        {isConn ? <Loader2 className="w-3 h-3 animate-spin" /> : isActive ? "Connected" : n.security}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Bluetooth */}
-          <div className={`mt-3 pt-3 border-t ${light ? "border-black/10" : "border-white/10"}`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                {conn.bluetooth.enabled ? <Bluetooth className="w-4 h-4 text-blue-400" /> : <BluetoothOff className="w-4 h-4 opacity-50" />}
-                <span className="text-xs font-medium">Bluetooth</span>
-              </div>
-              <div className="flex items-center gap-1">
-                {conn.bluetooth.enabled && (
-                  <button onClick={() => connections.scanBluetooth()} disabled={conn.bluetooth.scanning}
-                    className={`p-1 rounded ${subtleHover} disabled:opacity-50`} title="Scan for devices">
-                    {conn.bluetooth.scanning ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
-                  </button>
-                )}
-                <button onClick={() => connections.toggleBluetooth()} className={`relative w-9 h-5 rounded-full ${conn.bluetooth.enabled ? "bg-blue-500" : light ? "bg-black/15" : "bg-white/15"}`}>
-                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${conn.bluetooth.enabled ? "left-[20px]" : "left-0.5"}`} />
-                </button>
-              </div>
-            </div>
-            {conn.bluetooth.enabled && (
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {conn.bluetooth.devices.map((d) => (
-                  <button key={d.id} onClick={() => connections.toggleDevice(d.id)}
-                    className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg text-[11px] ${subtleHover}`}>
-                    <span className="truncate flex-1 text-left flex items-center gap-1.5">
-                      {d.name}
-                      {!d.simulated && <span className="text-[9px] px-1 rounded bg-green-500/20 text-green-400">REAL</span>}
-                    </span>
-                    <span className={`text-[10px] tabular-nums ${d.connected ? "text-green-400" : "opacity-50"}`}>
-                      {d.connected ? (d.battery != null ? `${d.battery}%` : "on") : "off"}
-                    </span>
-                  </button>
-                ))}
-                {conn.bluetooth.devices.length === 0 && (
-                  <button onClick={() => connections.scanBluetooth()} disabled={conn.bluetooth.scanning}
-                    className={`w-full text-[11px] text-center py-2 rounded-lg ${subtleHover} ${subtleBg}`}>
-                    {conn.bluetooth.scanning ? "Scanning..." : "Click to scan for devices"}
-                  </button>
-                )}
-                {conn.bluetooth.lastError && (
-                  <div className="text-[10px] text-red-400 px-2 pt-1">{conn.bluetooth.lastError}</div>
-                )}
-              </div>
-            )}
-            <div className={`text-[10px] mt-2 ${textSecondary}`}>Wi-Fi list is simulated — browsers can't scan real networks.</div>
-          </div>
         </div>
       )}
     </div>
